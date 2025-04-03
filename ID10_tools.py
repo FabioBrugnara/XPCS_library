@@ -36,8 +36,6 @@ OF = OF.flatten()
 ### SET VERSION ###
 ###################
 
-V = None; Nfmax_dense_file = None; Nfmax_sparse_file = None; len_dataset_string = None; len_scan_string = None; len_fileidx_string = None; df_eiger4m_entry = None
-
 def set_version(v):
     '''
     This function set some parameters for using a version of the ID10 line. We can add here as many versions as we want. The version v1 is the one used in the ID10 line before 2023. The v2 version is the one used in the ID10 line after 2023. The function set the parameters for the version selected.
@@ -48,9 +46,8 @@ def set_version(v):
             Version of the ID10 line ('v1', 'v2', or new others ...)
     '''
 
-    global V, Nfmax_dense_file, Nfmax_sparse_file, len_dataset_string, len_scan_string, len_fileidx_string, df_eiger4m_entry
-
     if v=='v1':
+        global V, Nfmax_dense_file, len_dataset_string, len_scan_string, len_fileidx_string, df_eiger4m_entry
         V = 'v1'
         Nfmax_dense_file = 2000 # this is the default value
         len_dataset_string = len_scan_string = 4
@@ -58,11 +55,12 @@ def set_version(v):
         df_eiger4m_entry = 'eiger4m'
 
     elif v=='v2':
+        global V, Nfmax_dense_file, Nfmax_sparse_file, len_dataset_string, len_scan_string, len_fileidx_string, df_eiger4m_entry
         V = 'v2'
         Nfmax_dense_file = 2000 # this is the default value
         Nfmax_sparse_file = 10000 # this is the default value
         len_dataset_string = 4
-        len_scan_string = len_scan_string = 4
+        len_scan_string = 4
         len_fileidx_string = 5
         df_eiger4m_entry = 'eiger4m_v2'
 

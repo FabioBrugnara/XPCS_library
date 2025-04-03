@@ -1,20 +1,26 @@
 ### IMPORT SCIENTIFIC LIBRARIES ###
+# standard libraries
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
 
+# sparse library
 from scipy import sparse
+
+# Gaussian filter for G2t plotting
 from scipy.ndimage import gaussian_filter
 
+# fast matrix multiplication and other (mkl and numexpr)
 from sparse_dot_mkl import dot_product_mkl, gram_matrix_mkl
 import numexpr as ne
 
+# C-implemented functions
 from XPCScy_tools.XPCScy_tools import mean_trace_float64
 
 
 ### VARIABLES ###
-of_value4plot = 2**32-1
+of_value4plot = 2**32-1 # value for the overflow pixels in the plot
  
 #############################################
 ##### SET BEAMLINE AND EXP VARIABLES #######
@@ -22,11 +28,12 @@ of_value4plot = 2**32-1
 
 def set_beamline(beamline_toset):
     '''
-    Set the beamline parameters for the data analysis.
+    Set the beamline parameters for the XPCS data analysis. The function load the correct varaibles (Nx, Ny, Npx, lxp, lyp) from the beamline tools.
 
-    Args:
-    beamline: str
-        Beamline name
+    Parameters
+    ----------
+        beamline: str
+            Beamline name ('PETRA3' or 'ID10')
     '''
     global beamline, Nx, Ny, Npx, lxp, lyp
 
@@ -48,13 +55,14 @@ def set_expvar(X0_toset, Y0_toset, L_toset):
     '''
     Set the experimental variables for the data analysis.
 
-    Args:
-    X0: float
-        X coordinate of the beam center
-    Y0: float
-        Y coordinate of the beam center
-    L: float
-        Sample to detector distance
+    Parameters
+    ----------
+        X0: float
+            X0 position of the beam center in pixels
+        Y0: float
+            Y0 position of the beam center in pixels
+        L: float
+            Distance from the sample to the detector in meters
     '''
     global X0, Y0, L
     X0, Y0, L = X0_toset, Y0_toset, L_toset
@@ -235,7 +243,7 @@ def gen_plots4mask(OF, e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high
 ########### MASK GEN ############
 #################################
 
-def gen_mask(OF, e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None,  e4m_mask=None, Qmask=None, mask_geom=None, Nfi=None, Nff=None, hist_plots=False):
+def gen_mask(e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None, OF=None, e4m_mask=None, Qmask=None, mask_geom=None, Nfi=None, Nff=None, hist_plots=False):
     '''
     Generate a mask for the e4m detector from various options. Also return some histograms to look at the result.
 
@@ -260,15 +268,21 @@ def gen_mask(OF, e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None,
         Mask of the e4m detector
     '''
 
-    if Nfi is None: Nfi = 0
-    if Nff is None: Nff = e4m_data.shape[0]
+    # CHECK TYPE OF e4m_data
     if sparse.issparse(e4m_data): issparse = True
     else: issparse = False
-    if (Nfi is not None) or (Nff is not None): e4m_data = e4m_data[Nfi:Nff]
+    
+    # LOAD DATA in Nfi:Nff
+    e4m_data = e4m_data[Nfi:Nff]
 
     mask = np.ones(e4m_data.shape[1], dtype=bool)
+    
+    # FILTER OVERFLOWS, E4M_MASK AND QMASK
+    if OF is not None: mask[OF] = False
+    if e4m_mask is not None: mask = mask * e4m_mask
+    if Qmask is not None: mask = mask * Qmask
 
-    # apply geometry
+    # APPLAY GEOMETRIC MASKS
     if (mask_geom is not None) and (mask_geom!=[]):
         mask = mask.reshape(Nx, Ny)
         X, Y = np.mgrid[:Nx, :Ny]
@@ -286,10 +300,7 @@ def gen_mask(OF, e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None,
                     mask = mask * ((Y<obj['y0']) | (Y>obj['y0']+obj['yl']) | (X<obj['x0']) | (X>obj['x0']+obj['xl']))
         mask = mask.flatten()
 
-    # remove overflows
-    mask[OF] = False
-
-    # filter using thresholds
+    # FILTER USING THRESHOLDS
     if ((Ith_high is not None) or (Ith_low is not None)):
         I_mean = e4m_data.sum(axis=0)/(itime*(Nff-Nfi))
         if Ith_high is not None: mask = mask * (I_mean<=Ith_high)
@@ -299,17 +310,12 @@ def gen_mask(OF, e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None,
         else       : I_max = e4m_data.max(axis=0)
         mask = mask * (I_max<Imaxth_high)
 
-    # filter e4m detector lines
-    if e4m_mask is not None: mask = mask * e4m_mask
-
-    # multiply by Qmask
-    if Qmask is not None: mask = mask * Qmask
-
+    # PRINT PERCENTAGE OF MASKED PIXELS
     print('################################################################################')
     print('Mask area -> ', mask.sum()/Npx*100, '%')
     print('################################################################################\n')
 
-    # plot the mask
+    # PLOT THE MASK
     plt.figure(figsize=(8,8))
     plt.imshow(mask.reshape((Nx, Ny)), origin='lower')
     plt.xlabel('Y [px]')
