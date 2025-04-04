@@ -39,18 +39,498 @@ documentation for details.</p>
 <div class="toctree-wrapper compound">
 </div>
 <section id="my-library">
-<span id="module-XPCS_tools_test"></span><h2>My Library<a class="headerlink" href="#my-library" title="Link to this heading">¶</a></h2>
+<span id="module-XPCS_tools"></span><h2>My Library<a class="headerlink" href="#my-library" title="Link to this heading">¶</a></h2>
 <p>This is a sample Python library.</p>
 <p>Author: Your Name</p>
 </section>
 <dl class="py function">
-<dt class="sig sig-object py" id="XPCS_tools_test.set_beamline">
-<span class="sig-prename descclassname"><span class="pre">XPCS_tools_test.</span></span><span class="sig-name descname"><span class="pre">set_beamline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beamline_toset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools_test.set_beamline" title="Link to this definition">¶</a></dt>
-<dd><p>Set the beamline parameters for the XPCS data analysis. The function load the correct varaibles (Nx, Ny, Npx, lxp, lyp) from the beamline tools.</p>
-<dl class="simple">
-<dt>Parameters:</dt><dd><p>test(float): Test value to check the function</p>
+<dt class="sig sig-object py" id="XPCS_tools.E2lambda">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">E2lambda</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">E</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.E2lambda" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="XPCS_tools.Q2theta">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">Q2theta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Ei</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Q</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.Q2theta" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="XPCS_tools.decorelation_f">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">decorelation_f</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.decorelation_f" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="XPCS_tools.gen_Qmask">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">gen_Qmask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Ei</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Qmap_plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.gen_Qmask" title="Link to this definition">¶</a></dt>
+<dd><p>Generate the Q masks for the given Q values at the working angle. The function also plot the Qmap for the given energy and angle (if Qmap_plot is True).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Ei</strong> (<em>float</em>) – Energy of the beam in keV</p></li>
+<li><p><strong>theta</strong> (<em>float</em>) – Working angle in degrees</p></li>
+<li><p><strong>Q</strong> (<em>float</em><em> or </em><em>list</em><em> of </em><em>floats</em>) – Q value(s) to mask in [1/A]</p></li>
+<li><p><strong>dq</strong> (<em>float</em><em> or </em><em>list</em><em> of </em><em>floats</em>) – Q width(s) to mask in [1/A]</p></li>
+<li><p><strong>Qmap_plot</strong> (<em>bool</em>) – If True, plot the Qmap for the given energy and angle</p></li>
+</ul>
 </dd>
-<dt>Returns:</dt><dd><p>None: The function sets the global variables for the beamline parameters.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Qmask</strong> – Q mask(s) of the e4m detector</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.array or dict of np.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="XPCS_tools.gen_mask">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">gen_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">e4m_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">OF</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e4m_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Qmask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_geom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ith_high</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ith_low</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Imaxth_high</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nfi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_plots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.gen_mask" title="Link to this definition">¶</a></dt>
+<dd><p>Generate a mask for the e4m detector from various options. The function plot the so-obtained mask, and also return some histograms to look at the results (if hist_plots is True).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>e4m_data</strong> (<em>sparse.csc_matrix</em>) – Sparse matrix of the e4m detector data</p></li>
+<li><p><strong>itime</strong> (<em>float</em>) – Integration time of the e4m detector</p></li>
+<li><p><strong>OF</strong> (<em>np.array</em>) – Overflow mask of the e4m detector</p></li>
+<li><p><strong>e4m_mask</strong> (<em>np.array</em>) – Mask of the e4m detector lines (slightly wider than the overflow lines, as pixels on the adges are not reliable)</p></li>
+<li><p><strong>Qmask</strong> (<em>np.array</em>) – Q mask of the e4m detector</p></li>
+<li><p><strong>mask_geom</strong> (<em>list</em><em> of </em><em>dicts</em>) – <p>List of geometries to mask (in dictionary form). The supported objects are:
+- Circle: {‘geom’: ‘Circle’, ‘Cx’: x0, ‘Cy’: y0, ‘r’: r, ‘inside’: True/False}
+- Rectangle: {‘geom’: ‘Rectangle’, ‘x0’: x0, ‘y0’: y0, ‘xl’: xl, ‘yl’: yl, ‘inside’: True/False}</p>
+<blockquote>
+<div><p>Example:
+mask_geom = [   {‘geom’: ‘Circle’, ‘Cx’: 100, ‘Cy’: 100, ‘r’: 10, ‘inside’: True}, {‘geom’: ‘Rectangle’, ‘x0’: 50, ‘y0’: 50, ‘xl’: 20, ‘yl’: 10, ‘inside’: False}]</p>
+</div></blockquote>
+</p></li>
+<li><p><strong>Ith_high</strong> (<em>float</em>) – Threshold (above) for the mean photon flux of the pixels</p></li>
+<li><p><strong>Ith_low</strong> (<em>float</em>) – Threshold (below) for the mean photon flux of the pixels</p></li>
+<li><p><strong>Imaxth_high</strong> (<em>float</em>) – Maximum number of counts per pixel treshold</p></li>
+<li><p><strong>Nfi</strong> (<em>int</em>) – First frame to consider</p></li>
+<li><p><strong>Nff</strong> (<em>int</em>) – Last frame to consider</p></li>
+<li><p><strong>hist_plots</strong> (<em>bool</em>) – If True, plot the histograms of the mean flux per pixel and maximum counts per pixel.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>mask</strong> – Mask of the e4m detector</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="XPCS_tools.gen_plots4mask">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">gen_plots4mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">e4m_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ith_high</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ith_low</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Imaxth_high</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">OF</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e4m_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Qmask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_geom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nfi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_plots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wide_plots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.gen_plots4mask" title="Link to this definition">¶</a></dt>
+<dd><p>Function that generates a number of different plots to create the mask! By default it generates the average flux per pixel map and histogram.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>e4m_data</strong> (<em>sparse.csr_matrix</em>) – Sparse matrix of the e4m detector data</p></li>
+<li><p><strong>itime</strong> (<em>float</em>) – Integration time of the e4m detector</p></li>
+<li><p><strong>Ith_high</strong> (<em>float</em>) – Threshold (above) for the mean photon flux of the pixels [ph/s/px]</p></li>
+<li><p><strong>Ith_low</strong> (<em>float</em>) – Threshold (below) for the mean photon flux of the pixels [ph/s/px]</p></li>
+<li><p><strong>Imaxth_high</strong> (<em>float</em>) – Maximum number of counts per pixel treshold [ph/px]</p></li>
+<li><p><strong>OF</strong> (<em>np.array</em>) – Overflow mask of the e4m detector</p></li>
+<li><p><strong>e4m_mask</strong> (<em>np.array</em>) – Mask of the e4m detector lines (slightly wider than the overflow lines, as pixels on the adges are not reliable)</p></li>
+<li><p><strong>Qmask</strong> (<em>np.array</em>) – Q mask of the e4m detector</p></li>
+<li><p><strong>mask_geom</strong> (<em>list</em><em> of </em><em>dicts</em>) – List of geometries to mask.</p></li>
+<li><p><strong>Nfi</strong> (<em>int</em>) – First frame to consider</p></li>
+<li><p><strong>Nff</strong> (<em>int</em>) – Last frame to consider</p></li>
+<li><p><strong>max_plots</strong> (<em>bool</em>) – If True, plot the maximum counts per pixel map and histogram.</p></li>
+<li><p><strong>wide_plots</strong> (<em>bool</em>) – If True, plot the wide histogram of the mean flux per pixel and maximum counts per pixel (if max_plots is True).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="XPCS_tools.get_G2t">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">get_G2t</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">e4m_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nfi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lbin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MKL_library</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">NumExpr_library</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.get_G2t" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the G2t matrix from the e4m, properly masked with the matrix mask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>e4m_data</strong> (<em>sparse.csr_matrix</em>) – Sparse matrix of the e4m detector data</p></li>
+<li><p><strong>mask</strong> (<em>np.array</em>) – Mask of the e4m detector</p></li>
+<li><p><strong>Nfi</strong> (<em>int</em>) – First frame to consider</p></li>
+<li><p><strong>Nff</strong> (<em>int</em>) – Last frame to consider</p></li>
+<li><p><strong>Lbin</strong> (<em>int</em>) – Binning factor for the frames</p></li>
+<li><p><strong>MKL_library</strong> (<em>boolean</em>) – If True, use the MKL library for the matrix multiplication</p></li>
+<li><p><strong>NumExpr_library</strong> (<em>boolean</em>) – If True, use the NumExpr library for the normalization</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>G2t</strong> – G2t matrix</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="XPCS_tools.get_G2t_bybunch">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">get_G2t_bybunch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">e4m_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nbunch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nfi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lbin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MKL_library</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">NumExpr_library</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.get_G2t_bybunch" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the G2t matrix from the e4m, bunching the frames in Nbunch bunches, thus averaging the G2t matrix over the bunches.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>e4m_data</strong> (<em>sparse.csc_matrix</em>) – Sparse matrix of the e4m detector data</p></li>
+<li><p><strong>Nbunch</strong> (<em>int</em>) – Number of bunches to consider</p></li>
+<li><p><strong>mask</strong> (<em>np.array</em>) – Mask of the e4m detector</p></li>
+<li><p><strong>Nfi</strong> (<em>int</em>) – First frame to consider</p></li>
+<li><p><strong>Nff</strong> (<em>int</em>) – Last frame to consider</p></li>
+<li><p><strong>Lbin</strong> (<em>int</em>) – Binning factor for the frames</p></li>
+<li><p><strong>MKL_library</strong> (<em>boolean</em>) – If True, use the MKL library for the matrix multiplication</p></li>
+<li><p><strong>NumExpr_library</strong> (<em>boolean</em>) – If True, use the NumExpr library for the normalization</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>G2t</strong> – G2t matrix</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="XPCS_tools.get_It">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">get_It</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">e4m_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nfi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lbin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nstep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.get_It" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the average frame intensity [ph/px/s] vector from the e4m_data, properly masked with the mask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>e4m_data</strong> (<em>sparse.csr_matrix</em>) – Sparse matrix of the e4m detector data</p></li>
+<li><p><strong>itime</strong> (<em>float</em>) – Integration time of the e4m detector</p></li>
+<li><p><strong>mask</strong> (<em>np.array</em>) – Mask of the e4m detector</p></li>
+<li><p><strong>Nfi</strong> (<em>int</em>) – First frame to consider</p></li>
+<li><p><strong>Nff</strong> (<em>int</em>) – Last frame to consider</p></li>
+<li><p><strong>Lbin</strong> (<em>int</em>) – Binning factor for the frames</p></li>
+<li><p><strong>Nstep</strong> (<em>int</em>) – Step for the frames</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>t_Idt</strong> (<em>np.array</em>) – Time array for the It vector</p></li>
+<li><p><strong>It</strong> (<em>np.array</em>) – It vector</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="XPCS_tools.get_g2">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">get_g2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">G2t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cython</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.get_g2" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the g2 from the G2t matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dt</strong> (<em>float</em>) – Time step between frames</p></li>
+<li><p><strong>G2t</strong> (<em>np.array</em>) – G2t matrix</p></li>
+<li><p><strong>cython</strong> (<em>boolean</em>) – If True, use the cython code to compute the g2</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>t</strong> (<em>np.array</em>) – Time array</p></li>
+<li><p><strong>g2</strong> (<em>np.array</em>) – g2 array</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="XPCS_tools.get_g2_mt">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">get_g2_mt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.get_g2_mt" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the multitau g2 from the g2 array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dt</strong> (<em>float</em>) – Time step between frames</p></li>
+<li><p><strong>g2</strong> (<em>np.array</em>) – g2 array</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>t_multit</strong> (<em>np.array</em>) – Time array for the multitau g2</p></li>
+<li><p><strong>g2_multit</strong> (<em>np.array</em>) – Multitau g2 array</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="XPCS_tools.lambda2E">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">lambda2E</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.lambda2E" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="XPCS_tools.plot_G2t">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">plot_G2t</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G2t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.plot_G2t" title="Link to this definition">¶</a></dt>
+<dd><p>‘
+Plot the G2t matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>G2t</strong> (<em>np.array</em>) – G2t matrix</p></li>
+<li><p><strong>vmin</strong> (<em>float</em>) – Minimum value for the color scale</p></li>
+<li><p><strong>vmax</strong> (<em>float</em>) – Maximum value for the color scale</p></li>
+<li><p><strong>itime</strong> (<em>float</em>) – Integration time of the e4m detector</p></li>
+<li><p><strong>t1</strong> (<em>float</em>) – First time to consider (in [s] if itime is provided, otherwise in [frames])</p></li>
+<li><p><strong>t2</strong> (<em>float</em>) – Last time to consider (in [s] if itime is provided, otherwise in [frames])</p></li>
+<li><p><strong>x1</strong> (<em>float</em>) – If provided, shift the x axis to the given initial value</p></li>
+<li><p><strong>x2</strong> (<em>float</em>) – If provided, shift the x axis to the given final value</p></li>
+<li><p><strong>sigma_filter</strong> (<em>float</em>) – Sigma for the Gaussian filter (in [frames])</p></li>
+<li><p><strong>full</strong> (<em>boolean</em>) – If True, plot the full G2t matrix mirroring the lower part</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="XPCS_tools.plot_XYprofile">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">plot_XYprofile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">e4m_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Y'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nfi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.plot_XYprofile" title="Link to this definition">¶</a></dt>
+<dd><p>Plot the X or Y profiles of the e4m detector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>e4m_data</strong> (<em>sparse.csc_matrix</em>) – Sparse matrix of the e4m detector data</p></li>
+<li><p><strong>itime</strong> (<em>float</em>) – Integration time of the e4m detector</p></li>
+<li><p><strong>ax</strong> (<em>str</em>) – Axis to plot (‘X’ or ‘Y’)</p></li>
+<li><p><strong>mask</strong> (<em>np.array</em>) – Mask of the e4m detector</p></li>
+<li><p><strong>Nfi</strong> (<em>int</em>) – First frame to consider</p></li>
+<li><p><strong>Nff</strong> (<em>int</em>) – Last frame to consider</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="XPCS_tools.set_beamline">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">set_beamline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beamline_toset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.set_beamline" title="Link to this definition">¶</a></dt>
+<dd><p>Set the beamline parameters for the XPCS data analysis. The function load the correct varaibles (Nx, Ny, Npx, lxp, lyp) from the beamline tools.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>beamline</strong> (<em>str</em>) – Beamline name (‘PETRA3’ or ‘ID10’)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="XPCS_tools.set_expvar">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">set_expvar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X0_toset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y0_toset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L_toset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.set_expvar" title="Link to this definition">¶</a></dt>
+<dd><p>Set the experimental variables for the data analysis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X0</strong> (<em>int</em>) – X0 position of the beam center in pixels</p></li>
+<li><p><strong>Y0</strong> (<em>int</em>) – Y0 position of the beam center in pixels</p></li>
+<li><p><strong>L</strong> (<em>float</em>) – Distance from the sample to the detector in meters</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="XPCS_tools.theta2Q">
+<span class="sig-prename descclassname"><span class="pre">XPCS_tools.</span></span><span class="sig-name descname"><span class="pre">theta2Q</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Ei</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#XPCS_tools.theta2Q" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function" id="module-ID10_tools">
+<dt class="sig sig-object py" id="ID10_tools.convert_dense_e4m_v1">
+<span class="sig-prename descclassname"><span class="pre">ID10_tools.</span></span><span class="sig-name descname"><span class="pre">convert_dense_e4m_v1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ndataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nscan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">of_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nf4overflow</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ID10_tools.convert_dense_e4m_v1" title="Link to this definition">¶</a></dt>
+<dd><p>Convert the e4m data in the master file to a sparse array. The function generate an image (frame) of the overflow values selecting the pixel that are in overfllows in all the first Nf4overflow frames. This image, called OF, can be then used to mask the overflow values in the sparse array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw_folder</strong> (<em>str</em>) – the folder where the raw data is stored</p></li>
+<li><p><strong>file_name</strong> (<em>str</em>) – the name of the file</p></li>
+<li><p><strong>Nscan</strong> (<em>int</em>) – the scan number</p></li>
+<li><p><strong>Nf4overflow</strong> (<em>int</em>) – the number of frames to use to generate the overflow image (default=10)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the overflow image#################
+sA (scipy.sparse.csr_array): the sparse array with the e4m data (shape: Nf x Npx)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>OF (np.array)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ID10_tools.get_Nbit_v1">
+<span class="sig-prename descclassname"><span class="pre">ID10_tools.</span></span><span class="sig-name descname"><span class="pre">get_Nbit_v1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ndataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nscan</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ID10_tools.get_Nbit_v1" title="Link to this definition">¶</a></dt>
+<dd><p>Get the number of bits of the e4m data in the master file. The function loads the first image from the first file and check the maximum value. The maximum value is used to determine the number of bits.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw_folder</strong> (<em>string</em>) – path to raw data folder</p></li>
+<li><p><strong>sample_name</strong> (<em>string</em>) – name of the sample</p></li>
+<li><p><strong>Ndataset</strong> (<em>int</em>) – number of the dataset</p></li>
+<li><p><strong>Nscan</strong> (<em>int</em>) – number of the scan</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Nbit</strong> – number of bits of the e4m data</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ID10_tools.load_dense_e4m">
+<span class="sig-prename descclassname"><span class="pre">ID10_tools.</span></span><span class="sig-name descname"><span class="pre">load_dense_e4m</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ndataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nscan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tosparse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">of_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nf4overflow</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ID10_tools.load_dense_e4m" title="Link to this definition">¶</a></dt>
+<dd><p>Load all the e4m data present in a scan.
+If tosparse=True (default) convert the dataframes to a sparse array. In older versions of the line (‘v1’) many overflow values are present in these frames, as they rapresent the lines on the detector, and also burned pixels. To save mamory, we want to avoid saving these values within the sparse array, as they are likely to be the same in all frames. The function generate an image (frame) of the overflow values selecting the pixel that are in overfllows in all the first Nf4overflow frames. This image, called OF, can be then used to mask the overflow values in the sparse array.</p>
+<p>WORK IN PROGRESS !!!</p>
+<ol class="arabic simple">
+<li><p>directly look in the scan folder instead of the master file (not relayng on the master hdf5 file). Need for Nframesperfile</p></li>
+<li><p>add the possibility to load only a part of the data (Nfi, Nff)</p></li>
+</ol>
+<p>FUTURE PERSPECTIVE…</p>
+<ol class="arabic simple">
+<li><p>Nstep myght be usefull</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>(</strong><strong>str</strong><strong>)</strong> (<em>file_name</em>)</p></li>
+<li><p><strong>(</strong><strong>str</strong><strong>)</strong></p></li>
+<li><p><strong>(</strong><strong>int</strong><strong>)</strong> (<em>Nf4overflow</em>)</p></li>
+<li><p><strong>(</strong><strong>int</strong><strong>)</strong></p></li>
+<li><p><strong>(</strong><strong>bool</strong><strong>)</strong> (<em>tosparse</em>)</p></li>
+<li><p><strong>(</strong><strong>int</strong><strong>)</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>OF (np.array)</strong> (<em>the overflow image (ONLY FOR OLDER ID10 VERSIONS (‘v1’)!!!)</em>)</p></li>
+<li><p><strong>sA (scipy.sparse.csr_array)</strong> (<em>the sparse array with the e4m data (shape: Nf x Npx)</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ID10_tools.load_pilatus">
+<span class="sig-prename descclassname"><span class="pre">ID10_tools.</span></span><span class="sig-name descname"><span class="pre">load_pilatus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ndataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nscan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nfi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lbin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ID10_tools.load_pilatus" title="Link to this definition">¶</a></dt>
+<dd><p>Load pilatus images from h5 file.</p>
+<p>THIS FUNCTION IS WORK IN PROGRESS !!!</p>
+<ol class="arabic simple">
+<li><p>work with multiple files?</p></li>
+<li><p>directly load files from the directory (not relayng on the master hdf5 file)</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw_folder</strong> (<em>string</em>) – path to raw data folder</p></li>
+<li><p><strong>sample_name</strong> (<em>string</em>) – name of the sample</p></li>
+<li><p><strong>Ndataset</strong> (<em>int</em>) – number of the dataset</p></li>
+<li><p><strong>Nscan</strong> (<em>int</em>) – number of the scan</p></li>
+<li><p><strong>Nfi</strong> (<em>int</em>) – number of the first image</p></li>
+<li><p><strong>Nff</strong> (<em>int</em>) – number of the last image</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>pilatus</strong> – dictionary with pilatus images</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ID10_tools.load_scan">
+<span class="sig-prename descclassname"><span class="pre">ID10_tools.</span></span><span class="sig-name descname"><span class="pre">load_scan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ndataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nscan</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ID10_tools.load_scan" title="Link to this definition">¶</a></dt>
+<dd><p>Load scan parameters from h5 file. Many try-except are used to avoid errors in the case of missing parameters. The function will try to load the parameters and if they are not present, it will skip them.
+Fill free to add other parameters to the scan dictionary, with the try-except method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw_folder</strong> (<em>string</em>) – path to raw data folder</p></li>
+<li><p><strong>sample_name</strong> (<em>string</em>) – name of the sample</p></li>
+<li><p><strong>Ndataset</strong> (<em>int</em>) – number of the dataset</p></li>
+<li><p><strong>Nscan</strong> (<em>int</em>) – number of the scan</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>scan</strong> – dictionary with scan parameters</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ID10_tools.load_sparse_e4m">
+<span class="sig-prename descclassname"><span class="pre">ID10_tools.</span></span><span class="sig-name descname"><span class="pre">load_sparse_e4m</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ndataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nscan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nfi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ID10_tools.load_sparse_e4m" title="Link to this definition">¶</a></dt>
+<dd><p>Load the sparse array and the overflow image from the correct e4m raw_data folder. This function works differently depending on the version of the ID10 line used. In the older version (‘v1’) the data should be first converted into the sparse format with the function ID10_tools.convert_dense_e4m. In the new version (‘v2’) the data is already saved in a sparse format at the line.</p>
+<p>FUTURE PERSPECTIVES…</p>
+<ol class="arabic simple">
+<li><p>implement Nstep to load only a part of the data</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>(</strong><strong>str</strong><strong>)</strong> (<em>sample_name</em>)</p></li>
+<li><p><strong>(</strong><strong>str</strong><strong>)</strong></p></li>
+<li><p><strong>(</strong><strong>int</strong><strong>)</strong> (<em>n_jobs</em>)</p></li>
+<li><p><strong>(</strong><strong>int</strong><strong>)</strong></p></li>
+<li><p><strong>(</strong><strong>int</strong><strong>)</strong></p></li>
+<li><p><strong>(</strong><strong>int</strong><strong>)</strong></p></li>
+<li><p><strong>(</strong><strong>int</strong><strong>)</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>OF (np.array)</strong> (<em>the overflow image (ONLY FOR OLDER ID10 VERSIONS (‘v1’)!!!)</em>)</p></li>
+<li><p><strong>sA (scipy.sparse.csr_array)</strong> (<em>the sparse array with the e4m data (shape: Nf x Npx)</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ID10_tools.save_sparse_e4m_v1">
+<span class="sig-prename descclassname"><span class="pre">ID10_tools.</span></span><span class="sig-name descname"><span class="pre">save_sparse_e4m_v1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">OF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sA</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ndataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nscan</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ID10_tools.save_sparse_e4m_v1" title="Link to this definition">¶</a></dt>
+<dd><p>Save the sparse array and the overflow image in the correct e4m raw_data folder. This function is usefull only for the older version of the ID10 line (‘v1’). In the new version (‘v2’) the data is already saved in a sparse format.</p>
+<p>POSSIBLE FUTURE PERSECTIVE…</p>
+<ol class="arabic simple">
+<li><p>save sparse array in multiple files to load them faster in parallel</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>(</strong><strong>np.array</strong><strong>)</strong> (<em>OF</em>)</p></li>
+<li><p><strong>(</strong><strong>scipy.sparse.csr_array</strong><strong>)</strong> (<em>sA</em>)</p></li>
+<li><p><strong>(</strong><strong>str</strong><strong>)</strong> (<em>sample_name</em>)</p></li>
+<li><p><strong>(</strong><strong>str</strong><strong>)</strong></p></li>
+<li><p><strong>(</strong><strong>int</strong><strong>)</strong> (<em>Nscan</em>)</p></li>
+<li><p><strong>(</strong><strong>int</strong><strong>)</strong></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ID10_tools.set_version">
+<span class="sig-prename descclassname"><span class="pre">ID10_tools.</span></span><span class="sig-name descname"><span class="pre">set_version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ID10_tools.set_version" title="Link to this definition">¶</a></dt>
+<dd><p>This function set some parameters for using a version of the ID10 line. We can add here as many versions as we want. The version v1 is the one used in the ID10 line before 2023. The v2 version is the one used in the ID10 line after 2023. The function set the parameters for the version selected.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> (<em>string</em>) – Version of the ID10 line (‘v1’, ‘v2’, or new others …)</p>
 </dd>
 </dl>
 </dd></dl>

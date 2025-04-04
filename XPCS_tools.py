@@ -815,7 +815,8 @@ def plot_XYprofile(e4m_data, itime, ax='Y', mask=None, Nfi=None, Nff=None):
     '''
     Plot the X or Y profiles of the e4m detector.
 
-    Args:
+    Parameters
+    ----------
     e4m_data: sparse.csc_matrix
         Sparse matrix of the e4m detector data
     itime: float
@@ -862,8 +863,8 @@ def plot_XYprofile(e4m_data, itime, ax='Y', mask=None, Nfi=None, Nff=None):
 def plot_G2t(G2t, vmin, vmax, itime=None, t1=None, t2=None, x1=None, x2=None, sigma_filter=None, full=False):
     ''''
     Plot the G2t matrix.
+    
     Parameters
-
     ----------
     G2t: np.array
         G2t matrix

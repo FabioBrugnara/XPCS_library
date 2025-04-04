@@ -16,7 +16,12 @@ documentation for details.
    :caption: Contents:
 
 
-.. automodule:: XPCS_tools_test
+.. automodule:: XPCS_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: ID10_tools
    :members:
    :undoc-members:
    :show-inheritance:
