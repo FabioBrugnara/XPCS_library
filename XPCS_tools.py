@@ -1,10 +1,10 @@
 """
-My Library
+XPCS_tools
 ==========
 
-This is a sample Python library.
+A python library for XPCS data analysis. Use in combination with the library ID10_tools_ or PETRA3_tools to load the data.
 
-Author: Your Name
+Author: Fabio Brugnara
 """
 
 
@@ -578,6 +578,7 @@ def get_G2t(e4m_data, mask=None, Nfi=None, Nff=None, Lbin=None, MKL_library=True
     -------
     G2t: np.array
         G2t matrix
+        
     '''
 
     if Nfi == None: Nfi = 0
@@ -863,7 +864,7 @@ def plot_XYprofile(e4m_data, itime, ax='Y', mask=None, Nfi=None, Nff=None):
 def plot_G2t(G2t, vmin, vmax, itime=None, t1=None, t2=None, x1=None, x2=None, sigma_filter=None, full=False):
     ''''
     Plot the G2t matrix.
-    
+
     Parameters
     ----------
     G2t: np.array

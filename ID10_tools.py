@@ -1,3 +1,12 @@
+"""
+ID10_tools
+==========
+
+A python library for loading and processing data from the ID10 beamline at the European Synchrotron Radiation Facility (ESRF). The library provides functions for loading and processing data from the Eiger 4M detector, including converting dense data to sparse format, loading scan information, and handling overflow values.
+
+Author: Fabio Brugnara
+"""
+
 ### IMPORT SCIENTIFIC LIBRARIES ###
 import os
 import numpy as np
@@ -129,9 +138,10 @@ def load_scan(raw_folder, sample_name, Ndataset, Nscan):
 
 def load_pilatus(raw_folder, sample_name, Ndataset, Nscan, Nfi=None, Nff=None, Lbin=None):
     '''
-    Load pilatus images from h5 file.\n
-    THIS FUNCTION IS WORK IN PROGRESS !!!\n
-    1) work with multiple files?\n
+    Load pilatus images from h5 file.
+    
+    Work in progress
+    1) work with multiple files?
     2) directly load files from the directory (not relayng on the master hdf5 file)
 
     Parameters
@@ -178,28 +188,41 @@ def load_pilatus(raw_folder, sample_name, Ndataset, Nscan, Nfi=None, Nff=None, L
 def load_dense_e4m(raw_folder, sample_name, Ndataset, Nscan, n_jobs=6, tosparse=True, of_value=None, Nf4overflow=10):
     '''
     Load all the e4m data present in a scan.
-    If tosparse=True (default) convert the dataframes to a sparse array. In older versions of the line ('v1') many overflow values are present in these frames, as they rapresent the lines on the detector, and also burned pixels. To save mamory, we want to avoid saving these values within the sparse array, as they are likely to be the same in all frames. The function generate an image (frame) of the overflow values selecting the pixel that are in overfllows in all the first Nf4overflow frames. This image, called OF, can be then used to mask the overflow values in the sparse array.\n
+    If tosparse=True (default) convert the dataframes to a sparse array.
+    In older versions of the line ('v1') many overflow values are present in these frames, as they rapresent the lines on the detector, and also burned pixels. 
+    To save mamory, we want to avoid saving these values within the sparse array, as they are likely to be the same in all frames. 
+    The function generate an image (frame) of the overflow values selecting the pixel that are in overfllows in all the first Nf4overflow frames. 
+    This image, called OF, can be then used to mask the overflow values in the sparse array.
     
-    WORK IN PROGRESS !!!\n
-    1) directly look in the scan folder instead of the master file (not relayng on the master hdf5 file). Need for Nframesperfile\n
-    2) add the possibility to load only a part of the data (Nfi, Nff)\n
+    Work in progress
+        1) directly look in the scan folder instead of the master file (not relayng on the master hdf5 file). Need for Nframesperfile.
+        2) add the possibility to load only a part of the data (Nfi, Nff).
 
-    FUTURE PERSPECTIVE...\n
-    1) Nstep myght be usefull
+    Future perspectives
+        1) Nstep myght be usefull.
 
     Parameters
     ----------
-        raw_folder (str): the folder where the raw data is stored
-        file_name (str): the name of the file
-        Nscan (int): the scan number
-        n_jobs (int): number of parallel jobs to use (default=6)
-        tosparse (bool): if True return a sparse array, otherwise return a numpy array (default=True)
-        Nf4overflow (int): the number of frames to use to generate the overflow image (default=10)
+        raw_folder: string
+            the folder where the raw data is stored
+        file_name: string
+            the name of the file
+        Nscan: int
+            the scan number
+        n_jobs: int
+            number of parallel jobs to use (default=6)
+        tosparse: bool
+            if True return a sparse array, otherwise return a numpy array (default=True)
+        Nf4overflow: int
+            the number of frames to use to generate the overflow image (default=10)
     
     Returns
     -------
-        OF (np.array): the overflow image (ONLY FOR OLDER ID10 VERSIONS ('v1')!!!)
-        sA (scipy.sparse.csr_array): the sparse array with the e4m data (shape: Nf x Npx)
+        OF: np.array
+            the overflow image (ONLY FOR OLDER ID10 VERSIONS ('v1')!!!)
+        sA: scipy.sparse.csr_array
+            the sparse array with the e4m data (shape: Nf x Npx)
+    
     '''
 
     # LOAD MASTER DATASET FILE
@@ -280,24 +303,36 @@ def load_dense_e4m(raw_folder, sample_name, Ndataset, Nscan, n_jobs=6, tosparse=
 
 def load_sparse_e4m(raw_folder, sample_name, Ndataset, Nscan, Nfi=None, Nff=None, n_jobs=10):
     '''
-    Load the sparse array and the overflow image from the correct e4m raw_data folder. This function works differently depending on the version of the ID10 line used. In the older version ('v1') the data should be first converted into the sparse format with the function ID10_tools.convert_dense_e4m. In the new version ('v2') the data is already saved in a sparse format at the line.\n
+    Load the sparse array and the overflow image from the correct e4m raw_data folder.
+    This function works differently depending on the version of the ID10 line used. 
+    In the older version ('v1') the data should be first converted into the sparse format with the function ID10_tools.convert_dense_e4m.
+    In the new version ('v2') the data is already saved in a sparse format at the line.
     
-    FUTURE PERSPECTIVES...\n
-    1) implement Nstep to load only a part of the data\n
+    Future perspectives
+    1) implement Nstep to load only a part of the data
     
     Parameters
     ----------
-        raw_folder (str): the folder where the raw data is stored
-        sample_name (str): the name of the sample
-        Ndataset (int): the number of the dataset
-        Nscan (int): the scan number
-        Nfi (int): the first frame to load (ONLY FOR THE V2 VERSION!) (default=None)
-        Nff (int): the last frame to load (ONLY FOR THE V2 VERSION!) (default=None)
-        n_jobs (int): number of parallel jobs to use (default=10)
+        raw_folder: string
+            the folder where the raw data is stored
+        sample_name: string
+            the name of the sample
+        Ndataset: int: 
+            the number of the dataset
+        Nscan: int
+            the scan number
+        Nfi: int  
+            the first frame to load (ONLY FOR THE V2 VERSION!) (default=None)
+        Nff: int
+            the last frame to load (ONLY FOR THE V2 VERSION!) (default=None)
+        n_jobs: int
+            number of parallel jobs to use (default=10)
     Returns
     -------
-        OF (np.array): the overflow image (ONLY FOR OLDER ID10 VERSIONS ('v1')!!!)
-        sA (scipy.sparse.csr_array): the sparse array with the e4m data (shape: Nf x Npx)
+        OF: np.array
+            the overflow image (ONLY FOR OLDER ID10 VERSIONS ('v1')!!!)
+        sA: scipy.sparse.csr_array
+            the sparse array with the e4m data (shape: Nf x Npx)
     '''
     ### V1 VERSION ###
     # The data are loaded from a single file which has been generated by this library (npz format) using the function ID10_tools.save_sparse_e4m_v1. The overflow image is saved in a separate file (npy format).
@@ -331,20 +366,6 @@ def load_sparse_e4m(raw_folder, sample_name, Ndataset, Nscan, Nfi=None, Nff=None
 
         ### LOAD FRAMES BY FILE FUNCTION (file i, with Nfi, Nff refered to the full run)
         def load_framesbyfile(i, Nfi, Nff, file_i, file_f):
-                '''
-                Function to loop over files in multiprocessing. The function loads the data from the file and returns a sparse array. The function is used in the parallel loop.
-
-                Parameters
-                ----------
-                    i (int): file number
-                    Nfi (int): first frame number
-                    Nff (int): last frame number
-                    file_i (int): first file number
-                    file_f (int): last file number
-                Returns
-                -------
-                    sA (scipy.sparse.csr_array): the sparse array with the e4m data (shape: Nf x Npx)
-                '''
                 # IMPORT HDF5PLUGIN (needed for the parallel loop)
                 import hdf5plugin
 
@@ -449,12 +470,18 @@ def save_sparse_e4m_v1(OF, sA, raw_folder, sample_name, Ndataset, Nscan):
 
     Parameters
     ----------
-        OF (np.array): the overflow image
-        sA (scipy.sparse.csr_array): the sparse array with the e4m data (shape: Nf x Npx)
-        raw_folder (str): the folder where the raw data is stored
-        sample_name (str): the name of the sample
-        Ndataset (int): the number of the dataset
-        Nscan (int): the scan number
+        OF: np.array
+            the overflow image
+        sA: scipy.sparse.csr_array
+            the sparse array with the e4m data (shape: Nf x Npx)
+        raw_folder: str
+            the folder where the raw data is stored
+        sample_name: str
+            the name of the sample
+        Ndataset: int
+            the number of the dataset
+        Nscan: int
+            the scan number
     '''
 
     e4m_sparse_file   = raw_folder + sample_name+'/' +sample_name+'_'+str(Ndataset).zfill(len_dataset_string)+'/scan'+str(Nscan).zfill(len_scan_string)+'/eiger4m_sparse.npz'
@@ -482,14 +509,20 @@ def convert_dense_e4m_v1(raw_folder, sample_name, Ndataset, Nscan, n_jobs=6, of_
     Convert the e4m data in the master file to a sparse array. The function generate an image (frame) of the overflow values selecting the pixel that are in overfllows in all the first Nf4overflow frames. This image, called OF, can be then used to mask the overflow values in the sparse array.
 
     Args:
-        raw_folder (str): the folder where the raw data is stored
-        file_name (str): the name of the file
-        Nscan (int): the scan number
-        Nf4overflow (int): the number of frames to use to generate the overflow image (default=10)
+        raw_folder: str
+            the folder where the raw data is stored
+        file_name: str
+            the name of the file
+        Nscan: int
+            the scan number
+        Nf4overflow: int
+            the number of frames to use to generate the overflow image (default=10)
     
     Returns:
-        OF (np.array): the overflow image#################
-        sA (scipy.sparse.csr_array): the sparse array with the e4m data (shape: Nf x Npx)
+        OF: np.array
+            the overflow image#################
+        sA: scipy.sparse.csr_array
+            the sparse array with the e4m data (shape: Nf x Npx)
     '''
 
     print('CONVERTING '+sample_name+', DATASET '+str(Ndataset).zfill(len_dataset_string)+', SCAN '+str(Nscan).zfill(len_scan_string)+' TO SPARSE ARRAY ...\n')

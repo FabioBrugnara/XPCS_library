@@ -5,11 +5,13 @@
 
 XPCS_library documentation
 ==========================
+XPCS_library is a Python package for X-ray Photon Correlation Spectroscopy (XPCS) data analysis. It contains tools for data processing, analysis, and visualization.
+The library mainly consist of four modules:
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
-
+1. XPCS_tools: This module contains functions for data processing and analysis.
+2. ID10_tools: This module contains functions to load and work on the data from the ID10 beamline at the European Synchrotron Radiation Facility (ESRF).
+3. PETRA3_tools: This module contains functions to load and work on the data from the PETRA III beamline at the Deutsches Elektronen-Synchrotron (DESY).
+4. COSMICRAY_tools: This module contains functions to filter out unwanted signals from the E4M detector.
 
 .. toctree::
    :maxdepth: 2
@@ -26,3 +28,7 @@ documentation for details.
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: COSMICRAY_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:

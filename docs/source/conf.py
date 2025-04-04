@@ -30,3 +30,15 @@ html_static_path = ['_static']
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))  # Adjust path as needed
+
+
+# Use ReadTheDocs theme (similar to NumPy docs)
+html_theme = "sphinx_rtd_theme"
+
+
+# Napoleon settings to ensure proper NumPy-style formatting
+napoleon_google_docstring = False  # Disable Google-style
+napoleon_numpy_docstring = True  # Enable NumPy-style
+napoleon_include_init_with_doc = True
+napoleon_use_rtype = False
+napoleon_use_param = False
