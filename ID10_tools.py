@@ -45,9 +45,8 @@ def set_version(v):
         v: string
             Version of the ID10 line ('v1', 'v2', or new others ...)
     '''
-
+    global V, Nfmax_dense_file, Nfmax_sparse_file, len_dataset_string, len_scan_string, len_fileidx_string, df_eiger4m_entry
     if v=='v1':
-        global V, Nfmax_dense_file, len_dataset_string, len_scan_string, len_fileidx_string, df_eiger4m_entry
         V = 'v1'
         Nfmax_dense_file = 2000 # this is the default value
         len_dataset_string = len_scan_string = 4
@@ -55,7 +54,6 @@ def set_version(v):
         df_eiger4m_entry = 'eiger4m'
 
     elif v=='v2':
-        global V, Nfmax_dense_file, Nfmax_sparse_file, len_dataset_string, len_scan_string, len_fileidx_string, df_eiger4m_entry
         V = 'v2'
         Nfmax_dense_file = 2000 # this is the default value
         Nfmax_sparse_file = 10000 # this is the default value
@@ -65,6 +63,9 @@ def set_version(v):
         df_eiger4m_entry = 'eiger4m_v2'
 
     ### add other versions here !!!
+
+    else:
+        raise ValueError('Version not recognized!')
 
 
 ####################################
