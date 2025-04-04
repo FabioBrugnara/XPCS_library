@@ -40,8 +40,11 @@ def set_beamline(beamline_toset:str):
     '''
     Set the beamline parameters for the XPCS data analysis. The function load the correct varaibles (Nx, Ny, Npx, lxp, lyp) from the beamline tools.
 
-    Args:
-        beamline_toset (str): Beamline name ('PETRA3' or 'ID10')
+    Parameters:
+        test(float): Test value to check the function
+
+    Returns:
+        None: The function sets the global variables for the beamline parameters.
     '''
 
     global beamline, Nx, Ny, Npx, lxp, lyp
