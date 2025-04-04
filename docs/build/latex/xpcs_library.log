@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2025.4.4)  4 APR 2025 15:03
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/Debian) (preloaded format=pdflatex 2025.4.4)  4 APR 2025 15:08
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -904,19 +904,19 @@ e COS-M-I-
 [17
 
 ])
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 1387.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 1387.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 1386.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 1386.
  (./xpcs_library.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 1387.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 1387.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 1386.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 1386.
 
 Package rerunfilecheck Info: File `xpcs_library.out' has not changed.
 (rerunfilecheck)             Checksum: 3FB93C17230FB39217E8C1FA359AC82B;529.
  ) 
 Here is how much of TeX's memory you used:
- 18954 strings out of 481239
- 315060 string characters out of 5920312
- 567820 words of memory out of 5000000
+ 18953 strings out of 481239
+ 315054 string characters out of 5920312
+ 567819 words of memory out of 5000000
  33767 multiletter control sequences out of 15000+600000
  576180 words of font info for 56 fonts, out of 8000000 for 9000
  1142 hyphenation exceptions out of 8191
@@ -928,10 +928,10 @@ nts/type1/public/tex-gyre/qtmb.pfb></usr/share/texmf/fonts/type1/public/tex-gyr
 e/qtmr.pfb></usr/share/texmf/fonts/type1/public/tex-gyre/qtmri.pfb></usr/share/
 texlive/texmf-dist/fonts/type1/public/txfonts/t1xbtt.pfb></usr/share/texlive/te
 xmf-dist/fonts/type1/public/txfonts/t1xtt.pfb>
-Output written on xpcs_library.pdf (21 pages, 177287 bytes).
+Output written on xpcs_library.pdf (21 pages, 176889 bytes).
 PDF statistics:
- 251 PDF objects out of 1000 (max. 8388607)
- 213 compressed objects within 3 object streams
- 63 named destinations out of 1000 (max. 500000)
+ 250 PDF objects out of 1000 (max. 8388607)
+ 212 compressed objects within 3 object streams
+ 62 named destinations out of 1000 (max. 500000)
  61 words of extra memory for PDF output out of 10000 (max. 10000000)
 

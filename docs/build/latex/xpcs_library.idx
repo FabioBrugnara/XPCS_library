@@ -21,12 +21,12 @@
 \indexentry{ID10\_tools@\spxentry{ID10\_tools}!module@\spxentry{module}|hyperpage}{7}
 \indexentry{convert\_dense\_e4m\_v1() (in module ID10\_tools)@\spxentry{convert\_dense\_e4m\_v1()}\spxextra{in module ID10\_tools}|hyperpage}{9}
 \indexentry{get\_Nbit\_v1() (in module ID10\_tools)@\spxentry{get\_Nbit\_v1()}\spxextra{in module ID10\_tools}|hyperpage}{9}
-\indexentry{load\_dense\_e4m() (in module ID10\_tools)@\spxentry{load\_dense\_e4m()}\spxextra{in module ID10\_tools}|hyperpage}{10}
+\indexentry{load\_dense\_e4m() (in module ID10\_tools)@\spxentry{load\_dense\_e4m()}\spxextra{in module ID10\_tools}|hyperpage}{9}
 \indexentry{load\_pilatus() (in module ID10\_tools)@\spxentry{load\_pilatus()}\spxextra{in module ID10\_tools}|hyperpage}{10}
 \indexentry{load\_scan() (in module ID10\_tools)@\spxentry{load\_scan()}\spxextra{in module ID10\_tools}|hyperpage}{10}
 \indexentry{load\_sparse\_e4m() (in module ID10\_tools)@\spxentry{load\_sparse\_e4m()}\spxextra{in module ID10\_tools}|hyperpage}{11}
 \indexentry{save\_sparse\_e4m\_v1() (in module ID10\_tools)@\spxentry{save\_sparse\_e4m\_v1()}\spxextra{in module ID10\_tools}|hyperpage}{11}
-\indexentry{set\_version() (in module ID10\_tools)@\spxentry{set\_version()}\spxextra{in module ID10\_tools}|hyperpage}{12}
+\indexentry{set\_version() (in module ID10\_tools)@\spxentry{set\_version()}\spxextra{in module ID10\_tools}|hyperpage}{11}
 \indexentry{module@\spxentry{module}!COSMICRAY\_tools@\spxentry{COSMICRAY\_tools}|hyperpage}{12}
 \indexentry{COSMICRAY\_tools@\spxentry{COSMICRAY\_tools}!module@\spxentry{module}|hyperpage}{12}
 \indexentry{cosmic\_filter() (in module COSMICRAY\_tools)@\spxentry{cosmic\_filter()}\spxextra{in module COSMICRAY\_tools}|hyperpage}{13}

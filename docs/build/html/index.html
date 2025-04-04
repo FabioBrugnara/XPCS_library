@@ -413,24 +413,21 @@ Plot the G2t matrix.</p>
 <dt class="sig sig-object py" id="ID10_tools.convert_dense_e4m_v1">
 <span class="sig-prename descclassname"><span class="pre">ID10_tools.</span></span><span class="sig-name descname"><span class="pre">convert_dense_e4m_v1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ndataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nscan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">of_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nf4overflow</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ID10_tools.convert_dense_e4m_v1" title="Link to this definition"></a></dt>
 <dd><p>Convert the e4m data in the master file to a sparse array. The function generate an image (frame) of the overflow values selecting the pixel that are in overfllows in all the first Nf4overflow frames. This image, called OF, can be then used to mask the overflow values in the sparse array.</p>
-<dl class="simple">
-<dt>Args:</dt><dd><dl class="simple">
-<dt>raw_folder: str</dt><dd><p>the folder where the raw data is stored</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw_folder</strong> (<em>str</em>) – the folder where the raw data is stored</p></li>
+<li><p><strong>file_name</strong> (<em>str</em>) – the name of the file</p></li>
+<li><p><strong>Nscan</strong> (<em>int</em>) – the scan number</p></li>
+<li><p><strong>Nf4overflow</strong> (<em>int</em>) – the number of frames to use to generate the overflow image (default=10)</p></li>
+</ul>
 </dd>
-<dt>file_name: str</dt><dd><p>the name of the file</p>
-</dd>
-<dt>Nscan: int</dt><dd><p>the scan number</p>
-</dd>
-<dt>Nf4overflow: int</dt><dd><p>the number of frames to use to generate the overflow image (default=10)</p>
-</dd>
-</dl>
-</dd>
-<dt>Returns:</dt><dd><dl class="simple">
-<dt>OF: np.array</dt><dd><p>the overflow image#################</p>
-</dd>
-<dt>sA: scipy.sparse.csr_array</dt><dd><p>the sparse array with the e4m data (shape: Nf x Npx)</p>
-</dd>
-</dl>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>OF</strong> (<em>np.array</em>) – the overflow image#################</p></li>
+<li><p><strong>sA</strong> (<em>scipy.sparse.csr_array</em>) – the sparse array with the e4m data (shape: Nf x Npx)</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -438,7 +435,9 @@ Plot the G2t matrix.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ID10_tools.get_Nbit_v1">
 <span class="sig-prename descclassname"><span class="pre">ID10_tools.</span></span><span class="sig-name descname"><span class="pre">get_Nbit_v1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ndataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nscan</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ID10_tools.get_Nbit_v1" title="Link to this definition"></a></dt>
-<dd><p>Get the number of bits of the e4m data in the master file. The function loads the first image from the first file and check the maximum value. The maximum value is used to determine the number of bits.</p>
+<dd><p>Get the number of bits of the e4m data in the master file.
+The function loads the first image from the first file and check the maximum value.
+The maximum value is used to determine the number of bits.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -574,10 +573,8 @@ In the new version (‘v2’) the data is already saved in a sparse format at th
 <dt class="sig sig-object py" id="ID10_tools.save_sparse_e4m_v1">
 <span class="sig-prename descclassname"><span class="pre">ID10_tools.</span></span><span class="sig-name descname"><span class="pre">save_sparse_e4m_v1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">OF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sA</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ndataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nscan</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ID10_tools.save_sparse_e4m_v1" title="Link to this definition"></a></dt>
 <dd><p>Save the sparse array and the overflow image in the correct e4m raw_data folder. This function is usefull only for the older version of the ID10 line (‘v1’). In the new version (‘v2’) the data is already saved in a sparse format.</p>
-<p>POSSIBLE FUTURE PERSECTIVE…</p>
-<ol class="arabic simple">
-<li><p>save sparse array in multiple files to load them faster in parallel</p></li>
-</ol>
+<p>Future perspectives
+1) save sparse array in multiple files to load them faster in parallel</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

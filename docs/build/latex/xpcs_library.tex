@@ -809,38 +809,41 @@ Author: Fabio Brugnara
 \pysigstopsignatures
 \sphinxAtStartPar
 Convert the e4m data in the master file to a sparse array. The function generate an image (frame) of the overflow values selecting the pixel that are in overfllows in all the first Nf4overflow frames. This image, called OF, can be then used to mask the overflow values in the sparse array.
-\begin{description}
-\sphinxlineitem{Args:}\begin{description}
-\sphinxlineitem{raw\_folder: str}
+\begin{quote}\begin{description}
+\sphinxlineitem{Parameters}\begin{itemize}
+\item {} 
 \sphinxAtStartPar
-the folder where the raw data is stored
+\sphinxstylestrong{raw\_folder} (\sphinxstyleemphasis{str}) \textendash{} the folder where the raw data is stored
 
-\sphinxlineitem{file\_name: str}
+\item {} 
 \sphinxAtStartPar
-the name of the file
+\sphinxstylestrong{file\_name} (\sphinxstyleemphasis{str}) \textendash{} the name of the file
 
-\sphinxlineitem{Nscan: int}
+\item {} 
 \sphinxAtStartPar
-the scan number
+\sphinxstylestrong{Nscan} (\sphinxstyleemphasis{int}) \textendash{} the scan number
 
-\sphinxlineitem{Nf4overflow: int}
+\item {} 
 \sphinxAtStartPar
-the number of frames to use to generate the overflow image (default=10)
+\sphinxstylestrong{Nf4overflow} (\sphinxstyleemphasis{int}) \textendash{} the number of frames to use to generate the overflow image (default=10)
 
-\end{description}
+\end{itemize}
 
-\sphinxlineitem{Returns:}\begin{description}
-\sphinxlineitem{OF: np.array}
+\sphinxlineitem{Returns}
 \sphinxAtStartPar
-the overflow image\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#
-
-\sphinxlineitem{sA: scipy.sparse.csr\_array}
+\begin{itemize}
+\item {} 
 \sphinxAtStartPar
-the sparse array with the e4m data (shape: Nf x Npx)
+\sphinxstylestrong{OF} (\sphinxstyleemphasis{np.array}) \textendash{} the overflow image\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#
 
-\end{description}
+\item {} 
+\sphinxAtStartPar
+\sphinxstylestrong{sA} (\sphinxstyleemphasis{scipy.sparse.csr\_array}) \textendash{} the sparse array with the e4m data (shape: Nf x Npx)
 
-\end{description}
+\end{itemize}
+
+
+\end{description}\end{quote}
 
 \end{fulllineitems}
 
@@ -855,7 +858,9 @@ the sparse array with the e4m data (shape: Nf x Npx)
 {}
 \pysigstopsignatures
 \sphinxAtStartPar
-Get the number of bits of the e4m data in the master file. The function loads the first image from the first file and check the maximum value. The maximum value is used to determine the number of bits.
+Get the number of bits of the e4m data in the master file.
+The function loads the first image from the first file and check the maximum value.
+The maximum value is used to determine the number of bits.
 \begin{quote}\begin{description}
 \sphinxlineitem{Parameters}\begin{itemize}
 \item {} 
@@ -1146,14 +1151,8 @@ Future perspectives
 Save the sparse array and the overflow image in the correct e4m raw\_data folder. This function is usefull only for the older version of the ID10 line (‘v1’). In the new version (‘v2’) the data is already saved in a sparse format.
 
 \sphinxAtStartPar
-POSSIBLE FUTURE PERSECTIVE…
-\begin{enumerate}
-\sphinxsetlistlabels{\arabic}{enumi}{enumii}{}{)}%
-\item {} 
-\sphinxAtStartPar
-save sparse array in multiple files to load them faster in parallel
-
-\end{enumerate}
+Future perspectives
+1) save sparse array in multiple files to load them faster in parallel
 \begin{quote}\begin{description}
 \sphinxlineitem{Parameters}\begin{itemize}
 \item {} 

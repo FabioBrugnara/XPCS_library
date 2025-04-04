@@ -419,7 +419,9 @@ def load_sparse_e4m(raw_folder, sample_name, Ndataset, Nscan, Nfi=None, Nff=None
 
 def get_Nbit_v1(raw_folder, sample_name, Ndataset, Nscan):
     '''
-    Get the number of bits of the e4m data in the master file. The function loads the first image from the first file and check the maximum value. The maximum value is used to determine the number of bits.
+    Get the number of bits of the e4m data in the master file.
+    The function loads the first image from the first file and check the maximum value.
+    The maximum value is used to determine the number of bits.
 
     Parameters
     ----------
@@ -465,7 +467,7 @@ def save_sparse_e4m_v1(OF, sA, raw_folder, sample_name, Ndataset, Nscan):
     '''
     Save the sparse array and the overflow image in the correct e4m raw_data folder. This function is usefull only for the older version of the ID10 line ('v1'). In the new version ('v2') the data is already saved in a sparse format.
 
-    POSSIBLE FUTURE PERSECTIVE...\n
+    Future perspectives
     1) save sparse array in multiple files to load them faster in parallel\n
 
     Parameters
@@ -482,6 +484,7 @@ def save_sparse_e4m_v1(OF, sA, raw_folder, sample_name, Ndataset, Nscan):
             the number of the dataset
         Nscan: int
             the scan number
+            
     '''
 
     e4m_sparse_file   = raw_folder + sample_name+'/' +sample_name+'_'+str(Ndataset).zfill(len_dataset_string)+'/scan'+str(Nscan).zfill(len_scan_string)+'/eiger4m_sparse.npz'
@@ -508,7 +511,8 @@ def convert_dense_e4m_v1(raw_folder, sample_name, Ndataset, Nscan, n_jobs=6, of_
     '''
     Convert the e4m data in the master file to a sparse array. The function generate an image (frame) of the overflow values selecting the pixel that are in overfllows in all the first Nf4overflow frames. This image, called OF, can be then used to mask the overflow values in the sparse array.
 
-    Args:
+    Parameters
+    ----------
         raw_folder: str
             the folder where the raw data is stored
         file_name: str
@@ -518,7 +522,8 @@ def convert_dense_e4m_v1(raw_folder, sample_name, Ndataset, Nscan, n_jobs=6, of_
         Nf4overflow: int
             the number of frames to use to generate the overflow image (default=10)
     
-    Returns:
+    Returns
+    -------
         OF: np.array
             the overflow image#################
         sA: scipy.sparse.csr_array

@@ -42,7 +42,7 @@
   \indexspace
   \bigletter L
   \item \spxentry{lambda2E()}\spxextra{in module XPCS\_tools}, \hyperpage{6}
-  \item \spxentry{load\_dense\_e4m()}\spxextra{in module ID10\_tools}, \hyperpage{10}
+  \item \spxentry{load\_dense\_e4m()}\spxextra{in module ID10\_tools}, \hyperpage{9}
   \item \spxentry{load\_pilatus()}\spxextra{in module ID10\_tools}, \hyperpage{10}
   \item \spxentry{load\_scan()}\spxextra{in module ID10\_tools}, \hyperpage{10}
   \item \spxentry{load\_sparse\_e4m()}\spxextra{in module ID10\_tools}, \hyperpage{11}
@@ -69,7 +69,7 @@
   \item \spxentry{set\_beamline()}\spxextra{in module COSMICRAY\_tools}, \hyperpage{14}
   \item \spxentry{set\_beamline()}\spxextra{in module XPCS\_tools}, \hyperpage{7}
   \item \spxentry{set\_expvar()}\spxextra{in module XPCS\_tools}, \hyperpage{7}
-  \item \spxentry{set\_version()}\spxextra{in module ID10\_tools}, \hyperpage{12}
+  \item \spxentry{set\_version()}\spxextra{in module ID10\_tools}, \hyperpage{11}
 
   \indexspace
   \bigletter T
