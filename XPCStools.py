@@ -1084,20 +1084,22 @@ def plot_G2t(G2t, vmin, vmax, itime=None, t1=None, t2=None, x1=None, x2=None, si
 
 
     # PLOT
-    plt.figure(figsize=(8,8))
-    plt.imshow(G2t, vmin=vmin, vmax=vmax, origin='lower')
+    fig, ax = plt.subplots(figsize=(8, 8))
+    im = ax.imshow(G2t, vmin=vmin, vmax=vmax, origin='lower')
 
     # add ticks
-    plt.yticks(np.round(np.linspace(0, G2t.shape[0], 6)).astype(int), np.round(np.linspace(x1, x2, 6)).astype(int))
-    plt.xticks(np.round(np.linspace(0, G2t.shape[1], 6)).astype(int), np.round(np.linspace(t1, t2, 6)).astype(int))
+    ax.set_yticks(np.round(np.linspace(0, G2t.shape[0], 6)).astype(int))
+    ax.set_yticklabels(np.round(np.linspace(x1, x2, 6)).astype(int))
+    ax.set_xticks(np.round(np.linspace(0, G2t.shape[1], 6)).astype(int))
+    ax.set_xticklabels(np.round(np.linspace(t1, t2, 6)).astype(int))
 
     # add labels and colorbar
-    plt.xlabel('Time [s]')
-    plt.ylabel('Time [s]')
-    plt.colorbar()
+    ax.set_xlabel('$t_1$ [s]')
+    ax.set_ylabel('$t_2$ [s]')
+    fig.colorbar(im, ax=ax)
 
-    plt.tight_layout()
-    plt.show()
+    fig.tight_layout()
+    return fig, ax
 
 #####################################################################################################################
 ##################################################### MULTI-TAU #####################################################
@@ -1436,42 +1438,49 @@ def plot_G2tmt(G2tmt, itime, vmin, vmax, lower_corr=4, upper_corr=None, yscale='
     else:                  N_corr = upper_corr
     N_ch = len(G2tmt[0])
 
-    plt.figure(figsize=(10,5))
-    T = (G2tmt[0][1].shape[0]+1) * itime
+    fig, ax = plt.subplots(figsize=(10, 5))
+    T = (G2tmt[0][1].shape[0] + 1) * itime
 
     for corr in range(lower_corr, N_corr):
         itime_corr = itime * 2**corr
         for ch in range(N_ch):
-            if (ch==0) or ((corr>0) and (ch<N_ch//2)):
+            if (ch == 0) or ((corr > 0) and (ch < N_ch // 2)):
                 pass
             else:
-                x = np.arange(G2tmt[corr][ch].size)*itime_corr + (1+ch)*itime_corr/2
+                x = np.arange(G2tmt[corr][ch].size) * itime_corr + (1 + ch) * itime_corr / 2
                 dx = itime_corr
-                y = np.ones(G2tmt[corr][ch].size) * itime_corr * ch # lower point
+                y = np.ones(G2tmt[corr][ch].size) * itime_corr * ch  # lower point
                 dy = itime_corr
 
-                xranges = [(x[i]-dx/2, dx) for i in range(len(x))]  # x ranges for each bar
+                xranges = [(x[i] - dx / 2, dx) for i in range(len(x))]  # x ranges for each bar
                 yrange = (y[0], dy)  # y range for the bars
 
-                if (filter_layer == None) or (corr >= filter_layer):
-                    BB = plt.broken_barh(xranges, yrange, array=G2tmt[corr][ch], cmap='viridis', clim=(vmin, vmax), edgecolor='black', linewidth=linewidth)
+                if (filter_layer is None) or (corr >= filter_layer):
+                    BB = ax.broken_barh(
+                        xranges, yrange, array=G2tmt[corr][ch], cmap="viridis", clim=(vmin, vmax), edgecolor="black", linewidth=linewidth
+                    )
                 else:
-                    filtered_data = gaussian_filter1d(G2tmt[corr][ch], 2**(filter_layer-corr), mode='nearest')
-                    BB = plt.broken_barh(xranges, yrange, array=filtered_data, cmap='viridis', clim=(vmin, vmax), edgecolor='black', linewidth=linewidth)
+                    filtered_data = gaussian_filter1d(G2tmt[corr][ch], 2 ** (filter_layer - corr), mode="nearest")
+                    BB = ax.broken_barh(
+                        xranges, yrange, array=filtered_data, cmap="viridis", clim=(vmin, vmax), edgecolor="black", linewidth=linewidth
+                    )
 
-    if vlines != None:
+    if vlines is not None:
         for vline in vlines:
-            plt.axvline(x=vline, color='red', linestyle='--', linewidth=1)
-        
+            ax.axvline(x=vline, color="red", linestyle="--", linewidth=1)
 
-    plt.xlabel('$t_0$ [s]')                                                                 
-    plt.ylabel('$\\Delta T$ [s]')
+    ax.set_xlabel("$t_w$ [s]")
+    ax.set_ylabel("$\\tau$ [s]")
 
-    if xlims==None: plt.xlim(0, T)                                                        
-    else:           plt.xlim(xlims)
-    if yscale == 'log': plt.yscale('log')                               
-    plt.colorbar(BB)
-    plt.tight_layout(); plt.show()
+    if xlims is None:
+        ax.set_xlim(0, T)
+    else:
+        ax.set_xlim(xlims)
+    if yscale == "log":
+        ax.set_yscale("log")
+    fig.colorbar(BB, ax=ax)
+    fig.tight_layout()
+    return fig, ax
 
 
 #############################

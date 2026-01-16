@@ -101,9 +101,13 @@ def load_scan(raw_folder, sample_name, Ndataset, Nscan):
     except: pass
     try: scan['fast_timer_period'] = h5file[f"{Nscan}.1"]['measurement']['fast_timer_period'][:]
     except: pass
+    try: scan['fast_epoch_trig'] = h5file[f"{Nscan}.1"]['measurement']['fast_epoch_trig'][:]
+    except: pass
     try: scan['slow_timer_trig']   = h5file[f"{Nscan}.1"]['measurement']['slow_timer_trig'][:]
     except: pass
     try: scan['slow_timer_period'] = h5file[f"{Nscan}.1"]['measurement']['slow_timer_period'][:]
+    except: pass
+    try: scan['slow_epoch_trig'] = h5file[f"{Nscan}.1"]['measurement']['slow_epoch_trig'][:]
     except: pass
 
     # energy
@@ -119,7 +123,7 @@ def load_scan(raw_folder, sample_name, Ndataset, Nscan):
     except: pass
 
 
-    # moror positions
+    # motor positions
     try:    scan['delcoup'] = h5file[f"{Nscan}.1"]['instrument']['positioners']['delcoup'][:]
     except: scan['delcoup'] = h5file[f"{Nscan}.1"]['instrument']['positioners']['delcoup'][()]
     try:    scan['ys']      = h5file[f"{Nscan}.1"]['instrument']['positioners']['ys'][:]
@@ -341,6 +345,9 @@ def load_sparse_e4m(raw_folder, sample_name, Ndataset, Nscan, Nfi=None, Nff=None
         e4m_sparse_file   = raw_folder + sample_name+'/' +sample_name+'_'+str(Ndataset).zfill(len_dataset_string)+'/scan'+str(Nscan).zfill(len_scan_string)+'/eiger4m_sparse.npz'
         print('Loading sparse array ...')    
         sA = sparse.load_npz(e4m_sparse_file).tocsr()
+        if load_mask is not None:
+            print('Applying mask ...')
+            sA = sA[:,load_mask]
         print('\t | Sparse array loaded from', e4m_sparse_file)
         print('\t | Sparsity:    ', '{:.1e}'.format(sA.size/(sA.shape[0]*sA.shape[1])))
         print('\t | Memory usage (scipy.csr_array):', '{:.3f}'.format((sA.data.nbytes + sA.indices.nbytes + sA.indptr.nbytes)/1024**3), 'GB', '(np.array usage:', '{:.3f}'.format(sA.shape[0]*sA.shape[1]*4/1024**3), 'GB)')
@@ -453,29 +460,21 @@ def get_Nbit_v1(raw_folder, sample_name, Ndataset, Nscan):
 ######## SAVE E4M SPARSE ARRAY (V1) ########
 ############################################
 
-def save_sparse_e4m_v1(OF, sA, raw_folder, sample_name, Ndataset, Nscan):
+def save_sparse_e4m_v1(sA, raw_folder, sample_name, Ndataset, Nscan):
     '''
-    NOT WORKING ANYMORE DUE TO SMALL CHANGES IN load_dense_e4m FUNCTION, MEANING ALSO IN THE FUNCTION ID10_tools.convert_dense_e4m_v1!!!
 
     Future perspectives
     1) save sparse array in multiple files to load them faster in parallel, following the v2 esrf convenction! \n
     '''
 
-    raise ValueError('This function is not working anymore! Please, rewrite the function to use the new load_dense_e4m function.\n')
+    #raise ValueError('This function is not working anymore! Please, rewrite the function to use the new load_dense_e4m function.\n')
 
     e4m_sparse_file   = raw_folder + sample_name+'/' +sample_name+'_'+str(Ndataset).zfill(len_dataset_string)+'/scan'+str(Nscan).zfill(len_scan_string)+'/eiger4m_sparse.npz'
-    e4m_overflow_file = raw_folder + sample_name+'/' +sample_name+'_'+str(Ndataset).zfill(len_dataset_string)+'/scan'+str(Nscan).zfill(len_scan_string)+'/eiger4m_overflow.npy'
-
+    
     # Save the sparse array
     print('Saving sparse array ...')
     sparse.save_npz(e4m_sparse_file, sA, compressed=False)
     print('\t -> Sparse array saved in:', e4m_sparse_file)
-    print('Done!')
-
-    # Save the overflow image
-    print('Saving overflow array ...')
-    np.save(e4m_overflow_file, OF)
-    print('\t -> Overflow array saved in:', e4m_overflow_file)
     print('Done!')
 
 
@@ -483,17 +482,16 @@ def save_sparse_e4m_v1(OF, sA, raw_folder, sample_name, Ndataset, Nscan):
 ######## CONVERT E4M DATA 2 SPARSE (V1) #########
 #################################################
 
-def convert_dense_e4m_v1(raw_folder, sample_name, Ndataset, Nscan, n_jobs=6, of_value=None, Nf4overflow=10,):
+def convert_dense_e4m_v1(raw_folder, sample_name, Ndataset, Nscan, n_jobs=6):
     '''
-    NOT WORKING ANYMORE DUE TO SMALL CHANGES IN load_dense_e4m FUNCTION!!!
     SHOULD ALSO (MAYBE) IMPLEMENTED THE ESRF LIKE SPARSE SAVING FORMAT IN HDFL MULTIPLE FILES!!
     '''
 
-    raise ValueError('This function is not working anymore! Please, rewrite the function to use the new load_dense_e4m function.\n')
+    #raise ValueError('This function is not working anymore! Please, rewrite the function to use the new load_dense_e4m function.\n')
 
     print('CONVERTING '+sample_name+', DATASET '+str(Ndataset).zfill(len_dataset_string)+', SCAN '+str(Nscan).zfill(len_scan_string)+' TO SPARSE ARRAY ...\n')
-    OF, sA = load_dense_e4m(raw_folder, sample_name, Ndataset, Nscan, tosparse=True, Nf4overflow=Nf4overflow, n_jobs=n_jobs, of_value=of_value)
-    save_sparse_e4m_v1(OF, sA, raw_folder, sample_name, Ndataset, Nscan)
+    sA = load_dense_e4m(raw_folder, sample_name, Ndataset, Nscan, n_jobs=n_jobs, tosparse=True)
+    save_sparse_e4m_v1(sA, raw_folder, sample_name, Ndataset, Nscan)
     print('\nDONE!')
     return None
 
