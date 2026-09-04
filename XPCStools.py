@@ -168,7 +168,7 @@ def decorrelation_f(t, tau, beta, c, y0):
 ########### MASK PLOTS ##########
 #################################
 
-def gen_plots4mask(e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None, mask=None, load_mask=None, mask_geom=None, Nfi=None, Nff=None, max_plots=False, wide_plots = False):
+def gen_plots4mask(e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None, mask=None, load_mask=None, mask_geom=None, Nfi=None, Nff=None, max_plots=False, wide_plots = False, plot_center=True):
     '''
     Function that generates a number of different plots to create the mask! By default it generates the average flux per pixel map and histogram.
     
@@ -224,8 +224,8 @@ def gen_plots4mask(e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high=Non
     # COMPUTE THE MAXIMUM COUNTS PER PX [ph/px] (only if needed)
     if (Imaxth_high is not None) or max_plots:
         I_max = np.ones(Npx)*of_value4plot
-        if e4m_data.shape[1] == Npx: I_max[mask] = np.array(e4m_data[:,mask].max(axis=0))
-        else:                        I_max[mask] = np.array(e4m_data.max(axis=0))
+        if e4m_data.shape[1] == Npx: I_max[mask] = (e4m_data[:,mask].max(axis=0)).toarray()
+        else:                        I_max[mask] = (e4m_data.max(axis=0)).toarray()
 
     # PRINT INFORMATIONS    
     print('################################################################################')
@@ -243,13 +243,13 @@ def gen_plots4mask(e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high=Non
     if Ith_low is None:  vmin = I_mean[mask].min()
     else:                vmin = Ith_low
     im = ax4.imshow(I_mean.reshape(Nx, Ny), vmin=vmin, vmax=vmax, origin='lower')                                                                    # plot the mean flux per px 
-    plt.colorbar(im, ax=ax4)                                                                                                                                # add colorbar, labels, ...  
-    ax4.set_title('Mean flux per px [ph/s/px]')                                                                                             
+    plt.colorbar(im, ax=ax4, label='Mean flux per pixel [ph/s/px]')                                                                                            
     ax4.set_xlabel('Y [px]')
     ax4.set_ylabel('X [px]')
     ax4.set_xlim(0, Ny)
     ax4.set_ylim(0, Nx)  
-    ax4.plot(Y0, X0, 'ro', markersize=10)                                                                                                                   # plot the beam center
+    if plot_center:
+        ax4.plot(Y0, X0, 'ro', markersize=10)                                                                                                                   # plot the beam center
     if mask_geom is not None:                                                                                                                               # plot the mask geometry (mask_geom)
         for obj in mask_geom:                                                                                                                               # loop over the objects ...  
             if obj['geom'] == 'Circle':
@@ -265,24 +265,24 @@ def gen_plots4mask(e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high=Non
 
     # MEAN FLUX PER PX HISTOGRAM (ZOOM)
     ax5 = plt.subplot(413)                                                                                                                                  # create the subplot
-    if (Ith_high is not None) and (Ith_low is not None): ax5.hist(I_mean[mask], bins=200, range=(Ith_low*.5, Ith_high*1.5),       label='(zoom)')           # plot the histogram
-    elif (Ith_high is not None) and (Ith_low is None):   ax5.hist(I_mean[mask], bins=200, range=(0, Ith_high*1.5),                label='(zoom)')           # ..
-    elif (Ith_high is None) and (Ith_low is not None):   ax5.hist(I_mean[mask], bins=200, range=(Ith_low*.5, I_mean[mask].max()), label='(zoom)')           # ..
-    else:                                                ax5.hist(I_mean[mask], bins=200,                                         label='(full range)')     # ..
-    if Ith_high is not None: ax5.axvline(Ith_high, color='r', label='Ith_high')                                                                             # plot the Ith_high limit
-    if Ith_low is not None:  ax5.axvline(Ith_low,  color='g', label='Ith_low')                                                                              # plot the Ith_low limit
+    if (Ith_high is not None) and (Ith_low is not None): ax5.hist(I_mean[mask], bins=200, range=(Ith_low*.5, Ith_high*1.5),       label='pixels')           # plot the histogram
+    elif (Ith_high is not None) and (Ith_low is None):   ax5.hist(I_mean[mask], bins=200, range=(0, Ith_high*1.5),                label='pixels')           # ..
+    elif (Ith_high is None) and (Ith_low is not None):   ax5.hist(I_mean[mask], bins=200, range=(Ith_low*.5, I_mean[mask].max()), label='pixels')           # ..
+    else:                                                ax5.hist(I_mean[mask], bins=200,                                         label='pixels')     # ..
+    if Ith_high is not None: ax5.axvline(Ith_high, color='r', label='Higher treshold')                                                                             # plot the Ith_high limit
+    if Ith_low is not None:  ax5.axvline(Ith_low,  color='g', label='Lower treshold')                                                                              # plot the Ith_low limit
     ax5.set_yscale('log')                                                                                                                                   # add the labels and legend
-    ax5.set_xlabel('Mean flux per px [ph/s/px]')                                                                                                          # ..   
+    ax5.set_xlabel('Mean flux per pixel [ph/s/px]')                                                                                                          # ..   
     ax5.legend()                                                                                                                                            # ..        
 
     # MEAN FLUX PER PX HISTOGRAM (FULL RANGE)
     if wide_plots:
         ax6 = plt.subplot(414)                                                                                                                              # create the subplot
         ax6.hist(I_mean[mask], bins=200, label='(full range)')                                                                                              # plot the histogram    
-        if Ith_high is not None: ax6.axvline(Ith_high, color='r', label='Ith_high')
-        if Ith_low  is not None: ax6.axvline(Ith_low,  color='g', label='Ith_low')
+        if Ith_high is not None: ax6.axvline(Ith_high, color='r', label='Higher treshold')
+        if Ith_low  is not None: ax6.axvline(Ith_low,  color='g', label='Lower treshold')
         ax6.set_yscale('log')
-        ax6.set_xlabel('Mean flux per px[ph/s/px]')
+        ax6.set_xlabel('Mean flux per pixel [ph/s/px]')
         ax6.legend()
 
     plt.tight_layout(); plt.show()
@@ -294,30 +294,29 @@ def gen_plots4mask(e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high=Non
 
         # MAX COUNTS PER PX IMAGE
         im = ax4.imshow(I_max.reshape(Nx, Ny), vmin=0, vmax=Imaxth_high, origin='lower')
-        plt.colorbar(im, ax=ax4)
-        ax4.set_title('Max counts per px [ph/px]')
+        plt.colorbar(im, ax=ax4, label='Max counts per pixel [ph/px]')
         ax4.set_xlabel('Y [px]')
         ax4.set_ylabel('X [px]')
 
         # MAX COUNTS PER PX HISTOGRAM (ZOOM)
         ax5 = plt.subplot(413)
         if Imaxth_high is not None: 
-            ax5.hist(I_max[mask], bins=100, label='(zoom)', range=(0, Imaxth_high*1.5))
-            ax5.axvline(Imaxth_high, color='r', label='Imaxth_high')
+            ax5.hist(I_max[mask], bins=100, label='pixels', range=(0, Imaxth_high*1.5))
+            ax5.axvline(Imaxth_high, color='r', label='Higher max treshold')
         else:
-            ax5.hist(I_max[mask], bins=100, label='(full range)')
+            ax5.hist(I_max[mask], bins=100, label='pixels')
 
         # add labels and legend
         ax5.set_yscale('log')
-        ax5.set_xlabel('Max counts per px [ph/px]')
+        ax5.set_xlabel('Max counts per pixel [ph/px]')
         ax5.legend()
 
         # MAX COUNTS PER PX HISTOGRAM (FULL RANGE)
         if wide_plots:
             ax6 = plt.subplot(414)
-            ax6.hist(I_max[mask], bins=200, label='(full range)')
+            ax6.hist(I_max[mask], bins=200, label='pixels')
             ax6.set_yscale('log')
-            ax6.set_xlabel('Max counts per px [ph/px]')
+            ax6.set_xlabel('Max counts per pixel [ph/px]')
             ax6.legend()
 
         plt.tight_layout()
@@ -396,7 +395,7 @@ def gen_mask(e4m_data=None, itime=None, mask=None, mask_geom=None, Ith_high=None
 
     # FILTER USING THRESHOLDS (Ith_high, Ith_low, Imaxth_high) & AND COMPUTING I_mean, I_max (if needed)
     if (Ith_high is not None) or (Ith_low is not None) or (hist_plots==True):
-        I_mean = e4m_data.sum(axis=0)/(itime*e4m_data.shape[0])
+        I_mean = np.array(e4m_data.sum(axis=0)/(itime*e4m_data.shape[0]))
         if Ith_high is not None: mask = mask * (I_mean<=Ith_high)
         if Ith_low is not None : mask = mask * (I_mean>=Ith_low)
     if (Imaxth_high!=None) or (hist_plots==True):
@@ -707,7 +706,7 @@ def plot_Sq(q, Sq, dSq=None, itime=None, cmap=cm.copper, lw=2, alpha=0.7, xlims=
     for i in range(len(Sq)):
         if dSq is None: ax.plot(q, Sq[i], color=colors[i], alpha=alpha, lw=lw)
         else: ax.errorbar(q, Sq[i], yerr=dSq[i], color=colors[i], alpha=alpha, lw=lw)
-    ax.set_xlabel("Q [$\\AA^{-1}$]"); ax.set_ylabel("S(Q) [a.u.]")
+    ax.set_xlabel("Q [$\\AA^{-1}$]"); ax.set_ylabel("I(Q) [a.u.]")
 
     if itime is None: itime_4cbar=1
     else:             itime_4cbar = itime
