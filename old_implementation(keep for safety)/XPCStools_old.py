@@ -42,11 +42,11 @@ def set_beamline(beamline_toset:str):
     global beamline, Nx, Ny, Npx, lxp, lyp
 
     if beamline_toset == 'PETRA3':
-        import PETRA3tools as PETRA
+        import beamline_tools.PETRA3tools_old as PETRA
         beamline = 'PETRA3'
         Nx, Ny, Npx, lxp, lyp = PETRA.Nx, PETRA.Ny, PETRA.Npx, PETRA.lxp, PETRA.lyp
     elif beamline_toset == 'ID10':
-        import ID10tools as ID10
+        import beamline_tools.ID10tools_old as ID10
         beamline = 'ID10'
         Nx, Ny, Npx, lxp, lyp = ID10.Nx, ID10.Ny, ID10.Npx, ID10.lxp, ID10.lyp
     else:
@@ -571,28 +571,6 @@ def get_It(e4m_data, itime, mask=None, Nfi=None, Nff=None, Lbin=None, Nstep=None
 #################################
 
 def bin_Itp(e4m_data, Lbin, Nfi=None, Nff=None, bin2dense=False):
-    '''
-    Compute the G2t matrix from the e4m, properly masked with the matrix mask.
-
-    Parameters
-    ----------
-    e4m_data: sparse.csr_matrix
-        Sparse matrix of the e4m detector data
-    Nfi: int
-        First frame to consider
-    Nff: int
-        Last frame to consider
-    Lbin: int
-        Binning factor for the frames
-    MKL_library: boolean
-        If True, use the MKL library for the matrix multiplication
-    
-    Returns
-    -------
-    G2t: np.array
-        G2t matrix
-        
-    '''
 
     if Nfi == None: Nfi = 0
     if Nff == None: Nff = e4m_data.shape[0]
