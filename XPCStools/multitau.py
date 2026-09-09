@@ -387,7 +387,6 @@ def _process_sparse_block(N: int, Itp, sparse_depth: int, ch_depth: int, N_spars
 
     return N, dense_rows, G2tmt_sym, G2tmt_nonsym
 
-
 def get_G2tmt_4sparse_parallel(
     data,
     sparse_depth: int,
@@ -460,10 +459,11 @@ def get_G2tmt_4sparse_parallel(
     G2tmt_chunks = [[[] for _ in Channels] for _ in Correlators]
 
     # Parallel loop across block iterations
-    results = Parallel(n_jobs=n_jobs)(
-        delayed(_process_sparse_block)(N, Itp, sparse_depth, ch_depth, N_sparseloops)
-        for N in tqdm(range(N_sparseloops))
-    )
+    jobs = (delayed(_process_sparse_block)(N, Itp, sparse_depth, ch_depth, N_sparseloops) for N in range(N_sparseloops))
+
+    with Parallel(n_jobs=n_jobs, return_as="generator") as parallel:
+        results_gen = parallel(jobs)
+        results = list(tqdm(results_gen, total=N_sparseloops, desc="Sparse blocks"))
 
     # Re-order outputs by original iteration index N
     results.sort(key=lambda x: x[0])
