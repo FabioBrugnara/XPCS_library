@@ -6,6 +6,9 @@ import scipy.sparse as sparse
 from scipy.ndimage import gaussian_filter
 import warnings
 
+import os
+os.environ["MKL_INTERFACE_LAYER"] = "ILP64"
+
 # MKL library imports with Scipy fallbacks
 try:
     from sparse_dot_mkl import dot_product_mkl, gram_matrix_mkl
@@ -57,13 +60,13 @@ from .config import config
 
 
 
-def get_It(e4m_data, itime, mask=None, Nfi=None, Nff=None, Lbin=None, Nstep=None):
+def get_It(data, itime, mask=None, Nfi=None, Nff=None, Lbin=None, Nstep=None):
     '''
-    Compute the average frame intensity [ph/px/s] vector from the e4m_data, properly masked with the mask. 
+    Compute the average frame intensity [ph/px/s] vector from the data, properly masked with the mask. 
     
     Parameters
     ----------
-    e4m_data: sparse.csr_matrix
+    data: sparse.csr_matrix
         Sparse matrix of the e4m detector data
     itime: float
         Integration time of the e4m detector
@@ -87,11 +90,11 @@ def get_It(e4m_data, itime, mask=None, Nfi=None, Nff=None, Lbin=None, Nstep=None
     '''
     # DEFAULT VALUES
     if Nfi is None: Nfi = 0
-    if Nff is None: Nff = e4m_data.shape[0]
+    if Nff is None: Nff = data.shape[0]
     if Lbin is None: Lbin = 1
     if Nstep is None: Nstep = 1
     if mask is None: 
-        total_px = e4m_data.shape[1] if e4m_data.shape[1] is not None else config["Npx"]
+        total_px = data.shape[1] if data.shape[1] is not None else config["Npx"]
         mask = np.ones(total_px, dtype=bool) 
 
     if Lbin > Nstep:
@@ -99,7 +102,7 @@ def get_It(e4m_data, itime, mask=None, Nfi=None, Nff=None, Lbin=None, Nstep=None
 
     # COMPUTE It (masked)
     idx = Nfi + np.array([i for i in range(Nff-Nfi) if i % Nstep < Lbin][:((Nff-Nfi)//Nstep-1)*Nstep]) # GET THE CORRECT INDEXES FROM Nfi, Nff, Lbin and Nstep
-    It = e4m_data[idx][:, mask].sum(axis=1) / mask.sum()                                                # Compute It
+    It = data[idx][:, mask].sum(axis=1) / mask.sum()                                                # Compute It
     if Lbin != 1: It = It[:(It.size//Lbin)*Lbin].reshape(-1, Lbin).sum(axis=1) / Lbin                   # BIN It (if Lbin > 1)
     It /= itime                                                                                        # NORMALIZE It
     t_It = np.linspace(Nfi*itime, Nff*itime, It.shape[0])                                              # BUILD THE TIME VECTOR    
@@ -109,16 +112,16 @@ def get_It(e4m_data, itime, mask=None, Nfi=None, Nff=None, Lbin=None, Nstep=None
 
 
 
-def bin_Itp(e4m_data, Lbin, Nfi=None, Nff=None, bin2dense=False):
+def bin_Itp(data, Lbin, Nfi=None, Nff=None, bin2dense=False):
 
     if Nfi is None: Nfi = 0
-    if Nff is None: Nff = e4m_data.shape[0]
+    if Nff is None: Nff = data.shape[0]
 
     # LOAD DATA
     t0 = time.time()
     print('Loading frames ...')
-    if (Nfi != 0) or (Nff != e4m_data.shape[0]): Itp = e4m_data[Nfi:Nff]
-    else: Itp = e4m_data
+    if (Nfi != 0) or (Nff != data.shape[0]): Itp = data[Nfi:Nff]
+    else: Itp = data
     # convert to float32
     if Itp.dtype != np.float32:
         Itp = Itp.astype(np.float32)
@@ -143,13 +146,13 @@ def bin_Itp(e4m_data, Lbin, Nfi=None, Nff=None, bin2dense=False):
 
 
 
-def get_G2t(e4m_data, mask=None, Nfi=None, Nff=None, Lbin=None, bin2dense=False):
+def get_G2t(data, mask=None, Nfi=None, Nff=None, Lbin=None, bin2dense=False):
     '''
     Compute the G2t matrix from the e4m, properly masked with the matrix mask.
 
     Parameters
     ----------
-    e4m_data: sparse.csr_matrix
+    data: sparse.csr_matrix
         Sparse matrix of the e4m detector data
     mask: np.array
         Mask of the e4m detector
@@ -170,14 +173,14 @@ def get_G2t(e4m_data, mask=None, Nfi=None, Nff=None, Lbin=None, bin2dense=False)
     '''
 
     if Nfi is None: Nfi = 0
-    if Nff is None: Nff = e4m_data.shape[0]
+    if Nff is None: Nff = data.shape[0]
     if Lbin is None: Lbin = 1
 
     # LOAD DATA
     t0 = time.time()
     print('Loading frames ...')
-    if (Nfi != 0) or (Nff != e4m_data.shape[0]): Itp = e4m_data[Nfi:Nff]
-    else: Itp = e4m_data
+    if (Nfi != 0) or (Nff != data.shape[0]): Itp = data[Nfi:Nff]
+    else: Itp = data
     # convert to float32
     if Itp.dtype != np.float32:
         Itp = Itp.astype(np.float32)
@@ -239,13 +242,13 @@ def get_G2t(e4m_data, mask=None, Nfi=None, Nff=None, Lbin=None, bin2dense=False)
 ######### COMUPTE G2t bunnched ###########
 ##########################################
 
-def get_G2t_bybunch(e4m_data, Nbunch, mask=None, Nfi=None, Nff=None, Lbin=None):
+def get_G2t_bybunch(data, Nbunch, mask=None, Nfi=None, Nff=None, Lbin=None):
     '''
     Compute the G2t matrix from the e4m, bunching the frames in Nbunch bunches, thus averaging the G2t matrix over the bunches. 
 
     Parameters
     ----------
-    e4m_data: sparse.csc_matrix
+    data: sparse.csc_matrix
         Sparse matrix of the e4m detector data
     Nbunch: int
         Number of bunches to consider
@@ -266,7 +269,7 @@ def get_G2t_bybunch(e4m_data, Nbunch, mask=None, Nfi=None, Nff=None, Lbin=None):
 
     # DEFAULT VALUES FOR Nfi, Nff, Lbin
     if Nfi is None: Nfi = 0
-    if Nff is None: Nff = e4m_data.shape[0]
+    if Nff is None: Nff = data.shape[0]
     if Lbin is None: Lbin = 1
 
     # GET BUNCHES LENGHT [fms]
@@ -278,7 +281,7 @@ def get_G2t_bybunch(e4m_data, Nbunch, mask=None, Nfi=None, Nff=None, Lbin=None):
     # COMPUTE G2t FOR EACH BUNCH
     for i in range(Nbunch):
         print('Computing G2t for bunch', i+1, '(Nfi =', Nfi+i*Lbunch, ', Nff =', Nfi+(i+1)*Lbunch, ') ...')
-        G2t += get_G2t(e4m_data, mask, Nfi=Nfi+i*Lbunch, Nff=Nfi+(i+1)*Lbunch, Lbin=Lbin)
+        G2t += get_G2t(data, mask, Nfi=Nfi+i*Lbunch, Nff=Nfi+(i+1)*Lbunch, Lbin=Lbin)
         print('Done!\n')
 
     return G2t/Nbunch

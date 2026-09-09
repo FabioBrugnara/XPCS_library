@@ -25,7 +25,7 @@ from .matrix_comp import (
 
 from .multitau import (
     get_G2tmt_4sparse,
-    print_Nf_choices,
+    get_G2tmt_4sparse_parallel,
     plot_G2tmt,
     get_g2mt,
     get_g2mt_cut,

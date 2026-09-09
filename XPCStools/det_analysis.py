@@ -9,13 +9,13 @@ from .utils import theta2Q
 
 
 
-def det_analysis(e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None, mask=None, load_mask=None, mask_geom=None, Nfi=None, Nff=None, max_plots=False, wide_plots=False, plot_center=True):
+def det_analysis(data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None, mask=None, load_mask=None, mask_geom=None, Nfi=None, Nff=None, max_plots=False, wide_plots=False, plot_center=False):
     '''
     Function that generates a number of different plots to create the mask! By default it generates the average flux per pixel map and histogram.
     
     Parameters
     ----------
-        e4m_data: sparse.csr_matrix
+        data: sparse.csr_matrix
             Sparse matrix of the e4m detector data
         itime: float
             Integration time of the e4m detector
@@ -26,8 +26,8 @@ def det_analysis(e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None,
         Imaxth_high: float
             Maximum number of counts per pixel treshold [ph/px]
         mask: np.array
-            If e4m_data.shape[1]==config["Npx"], is the mask to apply to the data for plotting and histogram generation.\n
-            If e4m_data.shape[1]!=config["Npx"], mask is assumed is the same used to load the data, thus mask.sum()==e4m_data.shape[1]. In this case mask is used to plot the correct X-Y profile.
+            If data.shape[1]==config["Npx"], is the mask to apply to the data for plotting and histogram generation.\n
+            If data.shape[1]!=config["Npx"], mask is assumed is the same used to load the data, thus mask.sum()==data.shape[1]. In this case mask is used to plot the correct X-Y profile.
         mask_geom: list of dicts
             List of geometries to mask. The function just plot the geometries on top of the XY profile.
         Nfi: int
@@ -45,15 +45,15 @@ def det_analysis(e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None,
     of_value4plot = config["of_value4plot"]
     total_px = config["Npx"]
 
-    # CHECK e4m_data AND load_mask DIMENSION
-    if (e4m_data.shape[1] != total_px) and (load_mask is None):     raise ValueError('Data are masked at loading! Please provide the load_mask!')
+    # CHECK data AND load_mask DIMENSION
+    if (data.shape[1] != total_px) and (load_mask is None):     raise ValueError('Data are masked at loading! Please provide the load_mask!')
     if (load_mask is not None) and (mask is not None):         raise ValueError('Cannot apply mask to masked loaded data!')
-    if (e4m_data.shape[1] == total_px) and (load_mask is not None): raise ValueError('Cannot use load_mask with already masked data!')
+    if (data.shape[1] == total_px) and (load_mask is not None): raise ValueError('Cannot use load_mask with already masked data!')
     if load_mask is not None:
-        if (e4m_data.shape[1] != load_mask.sum()):             raise ValueError('The load_mask does not match the e4m_data.shape[1]! Please check the mask dimensions!')
+        if (data.shape[1] != load_mask.sum()):             raise ValueError('The load_mask does not match the data.shape[1]! Please check the mask dimensions!')
     
     # LOAD DATA in Nfi:Nff
-    e4m_data = e4m_data[Nfi:Nff]
+    data = data[Nfi:Nff]
 
     # GENERATE MASK
     if mask is None: mask = np.ones(total_px, dtype=bool)
@@ -61,20 +61,20 @@ def det_analysis(e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None,
     # COMPUTE THE MEAN FLUX PER PX [ph/s/px]
     I_mean = np.ones(total_px) * of_value4plot
     if load_mask is None:
-        I_mean[mask]      = e4m_data[:,mask].sum(axis=0)/(itime*e4m_data.shape[0])
+        I_mean[mask]      = data[:,mask].sum(axis=0)/(itime*data.shape[0])
     else:
-        I_mean[load_mask] = e4m_data.sum(axis=0)        /(itime*e4m_data.shape[0])
+        I_mean[load_mask] = data.sum(axis=0)        /(itime*data.shape[0])
         mask = load_mask
 
     # COMPUTE THE MAXIMUM COUNTS PER PX [ph/px] (only if needed)
     if (Imaxth_high is not None) or max_plots:
         I_max = np.ones(total_px) * of_value4plot
-        if e4m_data.shape[1] == total_px: I_max[mask] = (e4m_data[:,mask].max(axis=0)).toarray()
-        else:                        I_max[mask] = (e4m_data.max(axis=0)).toarray()
+        if data.shape[1] == total_px: I_max[mask] = (data[:,mask].max(axis=0)).toarray()
+        else:                        I_max[mask] = (data.max(axis=0)).toarray()
 
     # PRINT INFORMATIONS    
     print('################################################################################')
-    print('Maximum count in the whole run ->', e4m_data.max())
+    print('Maximum count in the whole run ->', data.max())
     if Ith_high is not None: print('# of pixels above Ith_high treshold -> ', I_mean[mask][I_mean[mask]>Ith_high].shape[0], 'pixels (of', I_mean.shape[0], '=>', round(I_mean[mask][I_mean[mask]>Ith_high].shape[0]/I_mean[mask].shape[0]*100, 2), '%)')
     if Ith_low is not None: print('# of pixels below Ith_low treshold -> ',   I_mean[mask][I_mean[mask]<Ith_low].shape[0], 'pixels (of', I_mean.shape[0], '=>', round(I_mean[mask][I_mean[mask]<Ith_low].shape[0]/I_mean[mask].shape[0]*100, 2), '%)')
     if Imaxth_high is not None: print('# of pixels above Imaxth_high treshold -> ', I_max[mask][I_max[mask]>Imaxth_high].shape[0], 'pixels (of', I_max.shape[0], '=>', round(I_max[mask][I_max[mask]>Imaxth_high].shape[0]/I_max.shape[0]*100, 2), '%)')
@@ -170,13 +170,13 @@ def det_analysis(e4m_data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None,
 
 
 
-def gen_mask(e4m_data=None, itime=None, mask=None, mask_geom=None, Ith_high=None, Ith_low=None, Imaxth_high=None, Nfi=None, Nff=None, hist_plots=False):
+def gen_mask(data=None, itime=None, load_mask=None, mask=None, mask_geom=None, Ith_high=None, Ith_low=None, Imaxth_high=None, Nfi=None, Nff=None, hist_plots=False):
     '''
     Generate a mask for the e4m detector from various options. The function plot the so-obtained mask, and also return some histograms to look at the results (if hist_plots is True).
 
     Parameters
     ----------
-    e4m_data: sparse.csc_matrix
+    data: sparse.csc_matrix
         Sparse matrix of the e4m detector data
     itime: float
         Integration time of the e4m detector
@@ -209,13 +209,40 @@ def gen_mask(e4m_data=None, itime=None, mask=None, mask_geom=None, Ith_high=None
     Nx, Ny = config["Nx"], config["Ny"]
     total_px = config["Npx"]
 
-    # CHECK e4m_data DIMENSION & LOAD DATA in Nfi:Nff
-    if e4m_data is not None: 
-        if e4m_data.shape[1] != total_px: raise ValueError('Cannot generate a mask from already masked data!')
-        e4m_data = e4m_data[Nfi:Nff]
+    # CHECK data DIMENSION & LOAD DATA in Nfi:Nff
+    if data is not None:
+        if load_mask is not None:
+            load_mask = np.asarray(load_mask, dtype=bool).ravel()
 
-    # GENERATE MASK OF ONES (if mask is None)
-    if mask is None: mask = np.ones(total_px, dtype=bool)
+            if load_mask.size != total_px:
+                raise ValueError(
+                    "load_mask must have config['Npx'] elements!"
+                )
+
+            if data.shape[1] != load_mask.sum():
+                raise ValueError(
+                    "load_mask does not match the number of loaded pixels!"
+                )
+        elif data.shape[1] != total_px:
+            raise ValueError(
+                "Cannot generate a mask from already masked data "
+                "without providing load_mask!"
+            )
+
+        data = data[Nfi:Nff]
+
+    # GENERATE MASK OF ONES
+    if mask is None:
+        mask = np.ones(total_px, dtype=bool)
+    else:
+        mask = np.asarray(mask, dtype=bool).ravel()
+
+    if mask.size != total_px:
+        raise ValueError("mask must have config['Npx'] elements!")
+
+    # Pixels not present in the loaded data cannot be used
+    if load_mask is not None:
+        mask &= load_mask
 
     # APPLAY GEOMETRIC MASKS (if mask_geom is not None)
     if (mask_geom is not None) and (mask_geom!=[]):
@@ -238,14 +265,38 @@ def gen_mask(e4m_data=None, itime=None, mask=None, mask_geom=None, Ith_high=None
                     mask = mask * ~(((X>mm*Y+qq-int(obj['linewidth']/2))) & (X<mm*Y+qq+int(obj['linewidth']/2)))
         mask = mask.flatten()
 
-    # FILTER USING THRESHOLDS (Ith_high, Ith_low, Imaxth_high) & AND COMPUTING I_mean, I_max (if needed)
-    if (Ith_high is not None) or (Ith_low is not None) or (hist_plots==True):
-        I_mean = np.array(e4m_data.sum(axis=0)/(itime*e4m_data.shape[0]))
-        if Ith_high is not None: mask = mask * (I_mean<=Ith_high)
-        if Ith_low is not None : mask = mask * (I_mean>=Ith_low)
-    if (Imaxth_high!=None) or (hist_plots==True):
-        I_max = np.array(e4m_data.max(axis=0))
-        if Imaxth_high is not None : mask = mask * (I_max<=Imaxth_high)
+    # FILTER USING THRESHOLDS AND COMPUTE STATISTICS
+    if data is not None:
+        if load_mask is None:
+            data_mask = np.ones(total_px, dtype=bool)
+        else:
+            data_mask = load_mask
+
+        if (Ith_high is not None) or (Ith_low is not None) or hist_plots:
+            I_mean_loaded = np.asarray(
+                data.sum(axis=0)
+            ).ravel() / (itime * data.shape[0])
+
+            I_mean = np.zeros(total_px, dtype=float)
+            I_mean[data_mask] = I_mean_loaded
+
+            if Ith_high is not None:
+                mask &= I_mean <= Ith_high
+            if Ith_low is not None:
+                mask &= I_mean >= Ith_low
+
+        if (Imaxth_high is not None) or hist_plots:
+            I_max_loaded = np.asarray(
+                data.max(axis=0).toarray()
+                if hasattr(data.max(axis=0), "toarray")
+                else data.max(axis=0)
+            ).ravel()
+
+            I_max = np.zeros(total_px, dtype=float)
+            I_max[data_mask] = I_max_loaded
+
+            if Imaxth_high is not None:
+                mask &= I_max <= Imaxth_high
 
     # PRINT PERCENTAGE OF MASKED PIXELS
     print('#################################################')
