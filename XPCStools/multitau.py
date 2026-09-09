@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 from tqdm import tqdm
 from scipy.ndimage import gaussian_filter, gaussian_filter1d
+from joblib import Parallel, delayed
 
 # Internal imports from matrix_comp
 from .matrix_comp import gram_matrix_mkl, dot_product_mkl
@@ -101,7 +102,7 @@ def _G2t2G2tmt(G2t, type, ch_depth):
 
 
 
-def get_G2tmt_4sparse(data, sparse_depth: int, ch_depth: int = 4, Nfi: int = None, Nff: int = None):
+def get_G2tmt_4sparse(data, sparse_depth: int, ch_depth: int = 4, Nfi: int = 0, Nff: int = None):
     """
     Compute the multitau (mt) G2t correlation from sparse data.
 
@@ -129,8 +130,6 @@ def get_G2tmt_4sparse(data, sparse_depth: int, ch_depth: int = 4, Nfi: int = Non
     """
 
     ### DEFAULT VALUES
-    if Nfi is None: 
-        Nfi = 0
     if Nff is None: 
         Nff = (data.shape[0] - Nfi) // 2**sparse_depth * 2**sparse_depth + Nfi
         print(f'Nff set to {Nff} => (Nff-Nfi) = {(data.shape[0]-Nfi) // 2**sparse_depth}*2^sparse_depth, thrown frames = {(data.shape[0]-Nfi-(Nff-Nfi))} ({round((data.shape[0]-Nfi-(Nff-Nfi))/(data.shape[0]-Nfi)*100, 2)}%)')
@@ -201,34 +200,10 @@ def get_G2tmt_4sparse(data, sparse_depth: int, ch_depth: int = 4, Nfi: int = Non
     print('Done! (elapsed time =', round(time.time() - t0, 2), 's)')
 
 
-    '''############################ DENSE COMPUTATION ############################
-    t0 = time.time()
-    print('Computing dense multitau G2t...') 
-
-    while Itp_dense.shape[0] > 2**(ch_depth):
-        print(f"\t-> computing channels on {Itp_dense.shape[0]} frames ...")
-
-        G2tmt.append([])
-        norm = np.divide(np.sqrt(Itp_dense.shape[1]), Itp_dense.sum(axis=1), dtype=np.float32)
-        
-        for ch in Channels:
-            if ch < 2**ch_depth // 2:
-                G2tmt[-1].append(np.array([]))
-            else:
-                G2t_diag = (Itp_dense[:-ch] * Itp_dense[ch:]).sum(axis=1)
-                G2tmt[-1].append(np.array(G2t_diag * norm[ch:] * norm[:-ch]))  
-
-        # Bin Itp_dense by a factor 2
-        if Itp_dense.shape[0] / 2 != Itp_dense.shape[0] // 2:
-            Itp_dense = Itp_dense[0:Itp_dense.shape[0] // 2 * 2]
-            
-        Itp_dense = np.sum(Itp_dense.reshape((Itp_dense.shape[0] // 2, 2, Itp_dense.shape[1])), axis=1)
-        
-    print('Done! (elapsed time =', round(time.time() - t0, 2), 's)')'''
     ############################ DENSE COMPUTATION ############################
     t0 = time.time()
     print('Computing dense multitau G2t new...') 
-    
+
     num_channels = 2**ch_depth
     half_channels = 2**(ch_depth - 1)
     n_pixels = Itp_dense.shape[1]
@@ -255,36 +230,6 @@ def get_G2tmt_4sparse(data, sparse_depth: int, ch_depth: int = 4, Nfi: int = Non
     print('Done! (elapsed time =', round(time.time() - t0, 2), 's)')
 
     return G2tmt
-
-
-
-
-def print_Nf_choices(Nf: int):
-    """
-    Print the possible choices for reduced Nf, sparse depth, and thrown frames.
-    """
-    print(f'       Nf = {Nf}    =>    log2(Nf) = {round(np.log2(Nf), 2)}')
-    print('----------------------------------------------------')
-    exp_max = int(np.log2(Nf))
-    df = pd.DataFrame(columns=['red Nf', 'sparse depth', 'subG2t mem (GBy)', 'thrown frames %', 'thrown frames'])
-
-    # exp_max case
-    Nf_red = Nf - 2**(exp_max)
-    df.loc[0] = [f'2**{exp_max}', exp_max, round(2**(2 * exp_max) * 4 / 1024**3, 1), round(Nf_red / Nf * 100, 1), Nf_red]
-
-    # next cases
-    for minus in range(1, exp_max - 11):
-        n = int(Nf / (2**(exp_max - minus)))
-        Nf_red = Nf - n * 2**(exp_max - minus)
-        df.loc[len(df)] = [f'{n}*2**{exp_max - minus}', exp_max - minus, round(2**(2 * (exp_max - minus)) * 4 / 1024**3, 1), round(Nf_red / Nf * 100, 1), Nf_red]
-
-    try:
-        from IPython.display import display
-        display(df)
-    except ImportError:
-        print(df)
-    print('----------------------------------------------------')
-
 
 
 
@@ -415,38 +360,6 @@ def get_g2mt_cut(itime, G2tmt, t1, t2):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-from joblib import Parallel, delayed
-
-
 def _process_sparse_block(N: int, Itp, sparse_depth: int, ch_depth: int, N_sparseloops: int):
     """Processes a single sparse block N independently across worker threads/processes."""
     S = 2**sparse_depth
@@ -479,10 +392,8 @@ def get_G2tmt_4sparse_parallel(
     data,
     sparse_depth: int,
     ch_depth: int = 4,
-    Nfi: int = None,
+    Nfi: int = 0,
     Nff: int = None,
-    mask=None,
-    keep_symmetric: bool = False,
     n_jobs: int = -1
 ):
     """
@@ -512,37 +423,19 @@ def get_G2tmt_4sparse_parallel(
     G2tmt : list of np.ndarray
         List containing the sparse multitau G2t correlation arrays.
     """
-    
-    ### DEFAULT VALUES
-    if Nfi is None: 
-        Nfi = 0
+    # Set automatic value for Nff if not provided
     if Nff is None: 
         Nff = (data.shape[0] - Nfi) // 2**sparse_depth * 2**sparse_depth + Nfi
         print(f'Nff set to {Nff} => (Nff-Nfi) = {(data.shape[0]-Nfi) // 2**sparse_depth}*2^sparse_depth, thrown frames = {(data.shape[0]-Nfi-(Nff-Nfi))} ({round((data.shape[0]-Nfi-(Nff-Nfi))/(data.shape[0]-Nfi)*100, 2)}%)')
 
-    ### LOAD DATA
+    # LOAD DATA
     t0 = time.time()
     print('Loading frames ...')
     if (Nfi != 0) or (Nff != data.shape[0]): 
         Itp = data[Nfi:Nff]
     else: 
         Itp = data
-    if Itp.dtype != np.float32:
-        Itp = Itp.astype(np.float32)
-        print('and converting to float32 ...')
     print('Done! (elapsed time =', round(time.time() - t0, 2), 's)')
-
-    ### MASK DATA
-    if mask is not None:
-        t0 = time.time()
-        print('Masking data ...')
-        Itp = Itp[:, mask]
-        print('Done! (elapsed time =', round(time.time() - t0, 2), 's)')
-
-    ### PRINT DATA INFO
-    print('\t | ' + str(Itp.shape[0]) + ' frames X ' + str(Itp.shape[1]) + ' pixels')
-    print('\t | sparsity = {:.2e}'.format(Itp.data.size / (Itp.shape[0] * Itp.shape[1])))
-    print('\t | memory usage (sparse.csr_array @ ' + str(Itp.dtype) + ') =', round((Itp.data.nbytes + Itp.indices.nbytes + Itp.indptr.nbytes) / 1024**3, 3), 'GB')
 
     ### CHECK ARGUMENTS CONDITIONS
     if ch_depth < 1:
@@ -562,6 +455,10 @@ def get_G2tmt_4sparse_parallel(
     Correlators = range(sparse_depth - ch_depth + 1)
     Channels = range(2**ch_depth)
 
+    n_dense_rows = 2**(ch_depth - 1)
+    Itp_dense = np.zeros((N_sparseloops * n_dense_rows, Itp.shape[1]), dtype=np.float32)
+    G2tmt_chunks = [[[] for _ in Channels] for _ in Correlators]
+
     # Parallel loop across block iterations
     results = Parallel(n_jobs=n_jobs)(
         delayed(_process_sparse_block)(N, Itp, sparse_depth, ch_depth, N_sparseloops)
@@ -570,10 +467,6 @@ def get_G2tmt_4sparse_parallel(
 
     # Re-order outputs by original iteration index N
     results.sort(key=lambda x: x[0])
-
-    n_dense_rows = 2**(ch_depth - 1)
-    Itp_dense = np.zeros((N_sparseloops * n_dense_rows, Itp.shape[1]), dtype=np.float32)
-    G2tmt_chunks = [[[] for _ in Channels] for _ in Correlators]
 
     # Assemble outputs into pre-allocated memory structures
     for N, dense_rows, G2tmt_sym, G2tmt_nonsym in results:
@@ -594,28 +487,31 @@ def get_G2tmt_4sparse_parallel(
 
     print('Done! (elapsed time =', round(time.time() - t0, 2), 's)')
 
+
     ############################ DENSE COMPUTATION ############################
     t0 = time.time()
-    print('Computing dense multitau G2t...') 
+    print('Computing dense multitau G2t new...') 
 
-    while Itp_dense.shape[0] > 2**(ch_depth):
+    num_channels = 2**ch_depth
+    half_channels = 2**(ch_depth - 1)
+    n_pixels = Itp_dense.shape[1]
+
+    while Itp_dense.shape[0] > num_channels:
         print(f"\t-> computing channels on {Itp_dense.shape[0]} frames ...")
 
-        G2tmt.append([])
-        norm = np.divide(np.sqrt(Itp_dense.shape[1]), Itp_dense.sum(axis=1), dtype=np.float32)
+        norm = np.float32(np.sqrt(n_pixels)) / Itp_dense.sum(axis=1, dtype=np.float32)
+
+        level_g2tmt = [np.array([]) for _ in range(half_channels)]
         
-        for ch in Channels:
-            if ch < 2**ch_depth // 2:
-                G2tmt[-1].append(np.array([]))
-            else:
-                G2t_diag = (Itp_dense[:-ch] * Itp_dense[ch:]).sum(axis=1)
-                G2tmt[-1].append(np.array(G2t_diag * norm[ch:] * norm[:-ch]))  
+        for ch in range(half_channels, num_channels):
+            G2t_diag = np.einsum('ij,ij->i', Itp_dense[:-ch], Itp_dense[ch:])
+            level_g2tmt.append(G2t_diag * norm[ch:] * norm[:-ch])
 
-        # Bin Itp_dense by a factor 2
-        if Itp_dense.shape[0] / 2 != Itp_dense.shape[0] // 2:
-            Itp_dense = Itp_dense[0:Itp_dense.shape[0] // 2 * 2]
+        G2tmt.append(level_g2tmt)
 
-        Itp_dense = np.sum(Itp_dense.reshape((Itp_dense.shape[0] // 2, 2, Itp_dense.shape[1])), axis=1)
+        # Truncate to even frame count and bin by factor of 2
+        n_even = (Itp_dense.shape[0] // 2) * 2
+        Itp_dense = Itp_dense[:n_even].reshape(-1, 2, n_pixels).sum(axis=1)
 
     print('Done! (elapsed time =', round(time.time() - t0, 2), 's)')
 
