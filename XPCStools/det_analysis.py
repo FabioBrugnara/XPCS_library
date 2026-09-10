@@ -170,7 +170,7 @@ def det_analysis(data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None, mas
 
 
 
-def gen_mask(data=None, itime=None, load_mask=None, mask=None, mask_geom=None, Ith_high=None, Ith_low=None, Imaxth_high=None, Nfi=None, Nff=None, hist_plots=False):
+def gen_mask(data=None, itime=None, load_mask=None, mask=None, mask_geom=None, Ith_high=None, Ith_low=None, Imaxth_high=None, Nfi=None, Nff=None):
     '''
     Generate a mask for the e4m detector from various options. The function plot the so-obtained mask, and also return some histograms to look at the results (if hist_plots is True).
 
@@ -198,8 +198,6 @@ def gen_mask(data=None, itime=None, load_mask=None, mask=None, mask_geom=None, I
         First frame to consider
     Nff: int
         Last frame to consider  
-    hist_plots: bool
-        If True, plot the histograms of the mean flux per pixel and maximum counts per pixel.
 
     Returns
     -------
@@ -272,7 +270,7 @@ def gen_mask(data=None, itime=None, load_mask=None, mask=None, mask_geom=None, I
         else:
             data_mask = load_mask
 
-        if (Ith_high is not None) or (Ith_low is not None) or hist_plots:
+        if (Ith_high is not None) or (Ith_low is not None):
             I_mean_loaded = np.asarray(
                 data.sum(axis=0)
             ).ravel() / (itime * data.shape[0])
@@ -285,7 +283,7 @@ def gen_mask(data=None, itime=None, load_mask=None, mask=None, mask_geom=None, I
             if Ith_low is not None:
                 mask &= I_mean >= Ith_low
 
-        if (Imaxth_high is not None) or hist_plots:
+        if (Imaxth_high is not None):
             I_max_loaded = np.asarray(
                 data.max(axis=0).toarray()
                 if hasattr(data.max(axis=0), "toarray")
@@ -310,27 +308,6 @@ def gen_mask(data=None, itime=None, load_mask=None, mask=None, mask_geom=None, I
     plt.ylabel('X [px]')
     plt.tight_layout()
     plt.show()
-
-    # PLOT THE HISTOGRAMS (if hist_plots is True)
-    if hist_plots==True:
-        plt.figure(figsize=(8,6))
-        ax1 = plt.subplot(211)
-        ax2 = plt.subplot(212)
-
-        # Masked histogram of px flux
-        ax1.set_title('Masked histogram of px flux')
-        ax1.hist(I_mean[mask], bins=100)
-        ax1.set_yscale('log')
-        ax1.set_xlabel('Mean flux per px')
-
-        # Maked histogram of max counts per px
-        ax2.set_title('Masked histogram of max counts per px')
-        ax2.hist(I_max[mask].data, bins=30, label='no zero counts')
-        ax2.legend()
-        ax2.set_yscale('log')
-        ax2.set_xlabel('Max counts per px')
-        plt.tight_layout()
-        plt.show()
 
     return mask
 
