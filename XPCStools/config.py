@@ -29,6 +29,8 @@ config = ConfigDict({
     "Y0": None,
     "L": None,
     "movement_axis": None,
+    
+    "itime": None,
 
     "of_value4plot": 2**32 - 1,
 })

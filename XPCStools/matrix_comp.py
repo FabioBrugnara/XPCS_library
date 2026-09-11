@@ -41,7 +41,7 @@ from .config import config
 
 
 
-def get_It(data, itime, Lbin=None, Nstep=None):
+def get_It(data, Lbin=None, Nstep=None):
     '''
     Compute the average frame intensity [ph/px/s] vector from the data, properly masked with the mask. 
     
@@ -49,10 +49,6 @@ def get_It(data, itime, Lbin=None, Nstep=None):
     ----------
     data: sparse.csr_matrix
         Sparse matrix of the e4m detector data
-    itime: float
-        Integration time of the e4m detector
-    mask: np.array
-        Mask of the e4m detector
     Lbin: int
         Binning factor for the frames
     Nstep: int
@@ -65,6 +61,9 @@ def get_It(data, itime, Lbin=None, Nstep=None):
     It: np.array
         It vector
     '''
+
+    itime = config["itime"]
+
     # DEFAULT VALUES
     if Lbin is None: Lbin = 1
     if Nstep is None: Nstep = 1
@@ -77,9 +76,9 @@ def get_It(data, itime, Lbin=None, Nstep=None):
     It = data[idx].sum(axis=1) / data.shape[1]
     if Lbin != 1: It = It[:(It.size//Lbin)*Lbin].reshape(-1, Lbin).sum(axis=1) / Lbin                   # BIN It (if Lbin > 1)
     It /= itime                                                                                        # NORMALIZE It
-    t_It = np.linspace(itime, itime, It.shape[0])                                              # BUILD THE TIME VECTOR    
+    t_It = np.arange(1, It.size + 1) * itime * Nstep                                                # BUILD THE TIME VECTOR    
 
-    return np.vstack(t_It, It)
+    return np.vstack((t_It, It))
 
 
 
@@ -247,7 +246,7 @@ def get_g2(dt, G2t):
 
 
 
-def plot_G2t(G2t, vmin, vmax, itime=None, t1=None, t2=None, x1=None, x2=None, sigma_filter=None, full=False):
+def plot_G2t(G2t, vmin, vmax, t1=None, t2=None, x1=None, x2=None, sigma_filter=None, full=False):
     ''''
     Plot the G2t matrix.
 
@@ -259,8 +258,6 @@ def plot_G2t(G2t, vmin, vmax, itime=None, t1=None, t2=None, x1=None, x2=None, si
         Minimum value for the color scale
     vmax: float
         Maximum value for the color scale
-    itime: float
-        Integration time of the e4m detector
     t1: float
         First time to consider (in [s] if itime is provided, otherwise in [frames])
     t2: float
@@ -275,14 +272,14 @@ def plot_G2t(G2t, vmin, vmax, itime=None, t1=None, t2=None, x1=None, x2=None, si
         If True, plot the full G2t matrix mirroring the lower part
     '''
 
+    itime = config["itime"]
+
     # BEHAVIORS WHEN t1, t2 ARE NONE
     if t1 is None: t1 = 0
-    if (t2 is None) and (itime is None): t2 = G2t.shape[0]
-    elif (t2 is None) and (itime is not None): t2 = G2t.shape[0]*itime
+    if t2 is None: t2 = G2t.shape[0]*itime
 
     # BEHAVIOURS WHEN t2 IS BIGGER THAN THE G2t MATRIX
-    if (itime is None) and (t2 > G2t.shape[0]): t2 = G2t.shape[0]
-    elif (itime is not None) and (t2 > G2t.shape[0]*itime): t2 = G2t.shape[0]*itime
+    if t2 > G2t.shape[0]*itime: t2 = G2t.shape[0]*itime
 
     # BEHAVIOURS WHEN x1, x2 ARE NONE
     if (x1 is None) and (x2 is None): x1, x2 = t1, t2
@@ -290,8 +287,7 @@ def plot_G2t(G2t, vmin, vmax, itime=None, t1=None, t2=None, x1=None, x2=None, si
     elif x2 is None: x2 = G2t.shape[1]
 
     # CUT THE G2t MATRIX
-    if itime is None: G2t = G2t[t1:t2, x1:x2]
-    else: G2t = G2t[int(t1//itime):int(t2//itime), int(x1//itime):int(x2//itime)]
+    G2t = G2t[int(t1//itime):int(t2//itime), int(x1//itime):int(x2//itime)]
 
     # APPLY GAUSSIAN FILTER (if sigma_filter is not None)
     if sigma_filter is not None:

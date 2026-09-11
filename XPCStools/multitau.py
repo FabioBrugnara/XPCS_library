@@ -18,6 +18,8 @@ from joblib import Parallel, delayed
 # Internal imports from matrix_comp
 from .matrix_comp import gram_matrix_mkl, dot_product_mkl
 
+from .config import config
+
 
 
 
@@ -261,10 +263,13 @@ def get_G2tmt_4sparse(data, sparse_depth: int, ch_depth: int = 4, Nfi: int = 0, 
 
 
 
-def plot_G2tmt(G2tmt, itime, vmin, vmax, lower_corr=4, upper_corr=None, yscale='log', filter_layer=None, borders=False, xlims=None, vlines=None):
+def plot_G2tmt(G2tmt, vmin, vmax, lower_corr=4, upper_corr=None, yscale='log', filter_layer=None, borders=False, xlims=None, vlines=None):
     """
     Plot a multi-tau correlation matrix (G2tmt) using broken bar plot.
     """
+
+    itime = config["itime"]
+
     linewidth = 0.2 if borders else 0
 
     if upper_corr is None: 
@@ -320,11 +325,14 @@ def plot_G2tmt(G2tmt, itime, vmin, vmax, lower_corr=4, upper_corr=None, yscale='
 
 
 
-def compute_g2mt(itime, G2tmt, t1=None, t2=None):
+def get_g2mt(G2tmt, t1=None, t2=None):
     """
     Calculate time delays, mean, and standard error of g2 values for multi-tau XPCS.
     Optionally cuts/filters the data within a time window [t1, t2].
     """
+
+    itime = config["itime"]
+    
     t1 = 0 if t1 is None else t1
     t2 = np.inf if t2 is None else t2
     use_time_cut = (t1 > 0) or (t2 < np.inf)
@@ -357,4 +365,4 @@ def compute_g2mt(itime, G2tmt, t1=None, t2=None):
             g2mt.append(np.mean(arr))
             dg2mt.append(np.std(arr) / np.sqrt(arr.size))
 
-    return np.array(t_g2mt), np.array(g2mt), np.array(dg2mt)
+    return np.vstack((np.array(t_g2mt), np.array(g2mt), np.array(dg2mt)))

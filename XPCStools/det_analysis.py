@@ -8,7 +8,9 @@ from .config import config
 from .utils import theta2Q
 
 
-def get_Ip(data, itime, load_mask=None, Nfi=None, Nff=None, max_comp=False):
+def get_Ip(data, load_mask=None, max_comp=False):
+
+    itime = config["itime"]
 
     # Fetch parameters from config
     of_value4plot = config["of_value4plot"]
@@ -17,9 +19,6 @@ def get_Ip(data, itime, load_mask=None, Nfi=None, Nff=None, max_comp=False):
     # CHECK data AND load_mask DIMENSION
     if (data.shape[1] != total_px) and (load_mask is None):            raise ValueError('Data are masked at loading! Please provide the load_mask!')
     if (load_mask is not None) and (data.shape[1] != load_mask.sum()): raise ValueError('The load_mask does not match the data.shape[1]! Please check the mask dimensions!')
-    
-    # LOAD DATA in Nfi:Nff
-    data = data[Nfi:Nff]
 
     # COMPUTE THE MEAN FLUX PER PX [ph/s/px]
     Ip = np.ones(total_px) * of_value4plot
