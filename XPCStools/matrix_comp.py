@@ -41,7 +41,7 @@ from .config import config
 
 
 
-def get_It(data, itime, mask=None, Nfi=None, Nff=None, Lbin=None, Nstep=None):
+def get_It(data, itime, Lbin=None, Nstep=None):
     '''
     Compute the average frame intensity [ph/px/s] vector from the data, properly masked with the mask. 
     
@@ -53,10 +53,6 @@ def get_It(data, itime, mask=None, Nfi=None, Nff=None, Lbin=None, Nstep=None):
         Integration time of the e4m detector
     mask: np.array
         Mask of the e4m detector
-    Nfi: int
-        First frame to consider
-    Nff: int
-        Last frame to consider
     Lbin: int
         Binning factor for the frames
     Nstep: int
@@ -70,39 +66,30 @@ def get_It(data, itime, mask=None, Nfi=None, Nff=None, Lbin=None, Nstep=None):
         It vector
     '''
     # DEFAULT VALUES
-    if Nfi is None: Nfi = 0
-    if Nff is None: Nff = data.shape[0]
     if Lbin is None: Lbin = 1
     if Nstep is None: Nstep = 1
-    if mask is None: 
-        total_px = data.shape[1] if data.shape[1] is not None else config["Npx"]
-        mask = np.ones(total_px, dtype=bool) 
 
     if Lbin > Nstep:
         raise ValueError("Lbin cannot be greater than Nstep")
 
     # COMPUTE It (masked)
-    idx = Nfi + np.array([i for i in range(Nff-Nfi) if i % Nstep < Lbin][:((Nff-Nfi)//Nstep-1)*Nstep]) # GET THE CORRECT INDEXES FROM Nfi, Nff, Lbin and Nstep
-    It = data[idx][:, mask].sum(axis=1) / mask.sum()                                                # Compute It
+    idx = np.array([i for i in range(data.shape[0]) if i % Nstep < Lbin][:((data.shape[0])//Nstep-1)*Nstep]) # GET THE CORRECT INDEXES FROM Nfi, Nff, Lbin and Nstep
+    It = data[idx].sum(axis=1) / data.shape[1]
     if Lbin != 1: It = It[:(It.size//Lbin)*Lbin].reshape(-1, Lbin).sum(axis=1) / Lbin                   # BIN It (if Lbin > 1)
     It /= itime                                                                                        # NORMALIZE It
-    t_It = np.linspace(Nfi*itime, Nff*itime, It.shape[0])                                              # BUILD THE TIME VECTOR    
+    t_It = np.linspace(itime, itime, It.shape[0])                                              # BUILD THE TIME VECTOR    
 
-    return t_It, It
-
-
+    return np.vstack(t_It, It)
 
 
-def bin_Itp(data, Lbin, Nfi=None, Nff=None, bin2dense=False):
 
-    if Nfi is None: Nfi = 0
-    if Nff is None: Nff = data.shape[0]
+
+def get_Itp_bin(data, Lbin, bin2dense=False):
 
     # LOAD DATA
     t0 = time.time()
     print('Loading frames ...')
-    if (Nfi != 0) or (Nff != data.shape[0]): Itp = data[Nfi:Nff]
-    else: Itp = data
+    Itp = data
     # convert to float32
     if Itp.dtype != np.float32:
         Itp = Itp.astype(np.float32)
@@ -127,7 +114,7 @@ def bin_Itp(data, Lbin, Nfi=None, Nff=None, bin2dense=False):
 
 
 
-def get_G2t(data, mask=None, Nfi=None, Nff=None, Lbin=None, bin2dense=False):
+def get_G2t(data, Lbin=None, bin2dense=False):
     '''
     Compute the G2t matrix from the e4m, properly masked with the matrix mask.
 
@@ -135,12 +122,6 @@ def get_G2t(data, mask=None, Nfi=None, Nff=None, Lbin=None, bin2dense=False):
     ----------
     data: sparse.csr_matrix
         Sparse matrix of the e4m detector data
-    mask: np.array
-        Mask of the e4m detector
-    Nfi: int
-        First frame to consider
-    Nff: int
-        Last frame to consider
     Lbin: int
         Binning factor for the frames
     bin2dense: boolean
@@ -153,39 +134,15 @@ def get_G2t(data, mask=None, Nfi=None, Nff=None, Lbin=None, bin2dense=False):
         
     '''
 
-    if Nfi is None: Nfi = 0
-    if Nff is None: Nff = data.shape[0]
-    if Lbin is None: Lbin = 1
-
-    # LOAD DATA
-    t0 = time.time()
-    print('Loading frames ...')
-    if (Nfi != 0) or (Nff != data.shape[0]): Itp = data[Nfi:Nff]
-    else: Itp = data
-    # convert to float32
-    if Itp.dtype != np.float32:
-        Itp = Itp.astype(np.float32)
-    print('Done! (elapsed time =', round(time.time()-t0, 2), 's)')
-
+    Itp = data
+    if Itp.dtype != np.float32: raise ValueError('Data type must be float32, but got {}'.format(Itp.dtype))
+    
     # BIN DATA
-    if Lbin != 1:
+    if Lbin is not None:
         print('Binning frames (Lbin = '+str(Lbin)+', using MKL library) ...')
         Itp = (Itp[:Itp.shape[0]//Lbin*Lbin]) # throw the last frames 
         BIN_matrix = sparse.csr_array((np.ones(Itp.shape[0]), (np.arange(Itp.shape[0])//Lbin, np.arange(Itp.shape[0]))), dtype=np.float32)
         Itp = dot_product_mkl(BIN_matrix, Itp, dense=bin2dense)
-        print('Done! (elapsed time =', round(time.time()-t0, 2), 's)')
-        print('\t | '+str(Itp.shape[0])+' frames X '+str(Itp.shape[1])+' pixels')
-        if isinstance(Itp, (sparse.sparray, sparse.spmatrix)):
-            print('\t | sparsity = {:.2e}'.format(Itp.data.size/(Itp.shape[0]*Itp.shape[1])))
-            print('\t | memory usage (sparse.csr_array @ '+str(Itp.dtype)+') =', round((Itp.data.nbytes+Itp.indices.nbytes+Itp.indptr.nbytes)/1024**3, 3), 'GB')
-        else:
-            print('\t | memory usage (np.array @ '+str(Itp.dtype)+') =', round(Itp.nbytes/1024**3, 3), 'GB')
-    
-    # MASK DATA
-    t0 = time.time()
-    if mask is not None:
-        print('Masking data ...')
-        Itp = Itp[:, mask]
         print('Done! (elapsed time =', round(time.time()-t0, 2), 's)')
         print('\t | '+str(Itp.shape[0])+' frames X '+str(Itp.shape[1])+' pixels')
         if isinstance(Itp, (sparse.sparray, sparse.spmatrix)):
@@ -223,49 +180,26 @@ def get_G2t(data, mask=None, Nfi=None, Nff=None, Lbin=None, bin2dense=False):
 ######### COMUPTE G2t bunnched ###########
 ##########################################
 
-def get_G2t_bybunch(data, Nbunch, mask=None, Nfi=None, Nff=None, Lbin=None):
+def get_G2t_bybunch(data, Nbunch, Lbin=None, bin2dense=False):
     '''
     Compute the G2t matrix from the e4m, bunching the frames in Nbunch bunches, thus averaging the G2t matrix over the bunches. 
-
-    Parameters
-    ----------
-    data: sparse.csc_matrix
-        Sparse matrix of the e4m detector data
-    Nbunch: int
-        Number of bunches to consider
-    mask: np.array
-        Mask of the e4m detector
-    Nfi: int
-        First frame to consider
-    Nff: int
-        Last frame to consider
-    Lbin: int
-        Binning factor for the frames
-
-    Returns
-    -------
-    G2t: np.array
-        G2t matrix
     '''
 
-    # DEFAULT VALUES FOR Nfi, Nff, Lbin
-    if Nfi is None: Nfi = 0
-    if Nff is None: Nff = data.shape[0]
-    if Lbin is None: Lbin = 1
-
     # GET BUNCHES LENGHT [fms]
-    Lbunch = (Nff-Nfi)//Nbunch
+    Lbunch = data.shape[0]//Nbunch
 
     # PREPARE THE G2t MATRIX
     G2t = np.zeros((Lbunch//Lbin, Lbunch//Lbin), dtype=np.float64)
     
     # COMPUTE G2t FOR EACH BUNCH
     for i in range(Nbunch):
-        print('Computing G2t for bunch', i+1, '(Nfi =', Nfi+i*Lbunch, ', Nff =', Nfi+(i+1)*Lbunch, ') ...')
-        G2t += get_G2t(data, mask, Nfi=Nfi+i*Lbunch, Nff=Nfi+(i+1)*Lbunch, Lbin=Lbin)
+        print('Computing G2t for bunch', i+1, '...')
+        G2t += get_G2t(data[i*Lbunch:(i+1)*Lbunch,:], Lbin=Lbin, bin2dense=bin2dense)
         print('Done!\n')
 
     return G2t/Nbunch
+
+
 
 
 ##############################
@@ -309,45 +243,6 @@ def get_g2(dt, G2t):
     dg2 = dg2[:idx[0]] if len(idx) > 0 else dg2
 
     return np.arange(1, len(g2)+1)*dt, g2, dg2
-
-
-
-
-def get_g2mt_fromling2(dt, g2, dg2=None):
-    '''
-    Compute the multitau g2 from the g2 array.
-
-    Parameters
-    ----------
-    dt: float
-        Time step between frames
-    g2: np.array
-        g2 array    
-
-    Returns
-    -------
-    t_multit: np.array
-        Time array for the multitau g2
-    g2_multit: np.array
-        Multitau g2 array
-    '''
-
-    t = (np.arange(len(g2))+1)*dt
-
-    g2_multit = []
-    t_multit = []
-    for i in range(int(np.log2(len(g2)))+1):
-        g2_multit.append(g2[2**i-1:2**(i+1)-1].mean())
-        t_multit.append(t[2**i-1:2**(i+1)-1].mean())
-
-    if dg2 is not None:
-        dg2_multit = []
-        for i in range(int(np.log2(len(dg2)))+1):
-            dg2_multit.append(np.sqrt((dg2[2**i-1:2**(i+1)-1]**2).sum()/len(dg2[2**i-1:2**(i+1)-1])**2+np.std(dg2[2**i-1:2**(i+1)-1])**2/len(dg2[2**i-1:2**(i+1)-1])))
-
-        return np.array(t_multit), np.array(g2_multit), np.array(dg2_multit)
-    else:
-        return np.array(t_multit), np.array(g2_multit)
 
 
 

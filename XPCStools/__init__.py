@@ -18,11 +18,10 @@ from .det_analysis import (
 
 from .matrix_comp import (
     get_It,
-    bin_Itp,
+    get_Itp_bin,
     get_G2t,
     get_G2t_bybunch,
     get_g2,
-    get_g2mt_fromling2,
     plot_G2t,
 )
 
@@ -53,10 +52,11 @@ __all__ = [
     "get_mask",
     "get_Qmask",
     # Matrix Computation & Standard Correlation
+    "get_It",
+    "get_Itp_bin",
     "get_G2t",
     "get_G2t_bybunch",
     "get_g2",
-    "get_g2mt_fromling2",
     "plot_G2t",
     # Multi-tau Analysis
     "get_G2tmt_4sparse",

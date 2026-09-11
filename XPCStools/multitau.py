@@ -372,3 +372,43 @@ def get_g2mt_cut(itime, G2tmt, t1, t2):
     return np.array(t_g2mt), np.array(g2mt_cut), np.array(dg2mt_cut)
 
 
+import numpy as np
+
+def compute_g2mt_XX(itime, G2tmt, t1=None, t2=None):
+    """
+    Calculate time delays, mean, and standard error of g2 values for multi-tau XPCS.
+    Optionally cuts/filters the data within a time window [t1, t2].
+    """
+    t1 = 0 if t1 is None else t1
+    t2 = np.inf if t2 is None else t2
+    use_time_cut = (t1 > 0) or (t2 < np.inf)
+
+    N_corr, N_ch = len(G2tmt), len(G2tmt[0])
+
+    t_g2mt, g2mt, dg2mt = [], [], []
+
+    for corr in range(N_corr):
+        itime_corr = itime * (2**corr)
+        
+        for ch in range(N_ch):
+            # Skip multi-tau redundant channels
+            if (ch == 0) or (corr > 0 and ch < N_ch // 2):
+                continue
+
+            arr = G2tmt[corr][ch]
+
+            # Apply time window mask if requested
+            if use_time_cut:
+                x = np.arange(arr.size) * itime_corr + (1 + ch) * itime_corr / 2
+                mask = (x >= t1) & (x <= t2) # Simplified mask (x ± dx/2 bounds simplify to x directly)
+                
+                if not np.any(mask):
+                    continue
+                arr = arr[mask]
+
+            # Compute statistics
+            t_g2mt.append(itime_corr * ch)
+            g2mt.append(np.mean(arr))
+            dg2mt.append(np.std(arr) / np.sqrt(arr.size))
+
+    return np.array(t_g2mt), np.array(g2mt), np.array(dg2mt)
