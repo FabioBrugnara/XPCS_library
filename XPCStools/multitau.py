@@ -263,14 +263,15 @@ def get_G2tmt_4sparse(data, sparse_depth: int, ch_depth: int = 4, Nfi: int = 0, 
 
 
 
-def plot_G2tmt(G2tmt, vmin, vmax, lower_corr=4, upper_corr=None, yscale='log', filter_layer=None, borders=False, xlims=None, vlines=None):
+def plot_G2tmt(G2tmt, vmin, vmax, lower_corr=4, upper_corr=None, yscale='log', filter_layer=None, xlims=None, vlines=None):
     """
     Plot a multi-tau correlation matrix (G2tmt) using broken bar plot.
     """
 
     itime = config["itime"]
 
-    linewidth = 0.2 if borders else 0
+    #linewidth = 0.2 if borders else 0
+    linewidth = 0
 
     if upper_corr is None: 
         N_corr = len(G2tmt)
@@ -332,7 +333,7 @@ def get_g2mt(G2tmt, t1=None, t2=None):
     """
 
     itime = config["itime"]
-    
+
     t1 = 0 if t1 is None else t1
     t2 = np.inf if t2 is None else t2
     use_time_cut = (t1 > 0) or (t2 < np.inf)
@@ -366,3 +367,46 @@ def get_g2mt(G2tmt, t1=None, t2=None):
             dg2mt.append(np.std(arr) / np.sqrt(arr.size))
 
     return np.vstack((np.array(t_g2mt), np.array(g2mt), np.array(dg2mt)))
+
+
+
+def save_G2tmt(filepath, G2tmt):
+    """
+    Save G2tmt (2D nested list of np.ndarrays) to a compressed .npz file.
+    """
+    if not filepath.endswith('.npz'):
+        filepath += '.npz'
+        
+    n_corr = len(G2tmt)
+    n_ch = len(G2tmt[0]) if n_corr > 0 else 0
+    
+    # Store matrix dimensions and flattened array dict
+    data_dict = {"_shape": np.array([n_corr, n_ch])}
+    
+    for corr in range(n_corr):
+        for ch in range(n_ch):
+            data_dict[f"arr_{corr}_{ch}"] = G2tmt[corr][ch]
+            
+    np.savez_compressed(filepath, **data_dict)
+    print(f"G2tmt successfully saved to {filepath}")
+
+
+
+def load_G2tmt(filepath):
+    """
+    Load G2tmt from a .npz file and reconstruct the 2D nested list structure.
+    """
+    if not filepath.endswith('.npz'):
+        filepath += '.npz'
+        
+    data = np.load(filepath)
+    n_corr, n_ch = data["_shape"]
+    
+    # Reconstruct 2D nested list
+    G2tmt = [
+        [data[f"arr_{corr}_{ch}"] for ch in range(n_ch)]
+        for corr in range(n_corr)
+    ]
+    
+    print(f"G2tmt successfully loaded ({n_corr} correlators x {n_ch} channels) from {filepath}")
+    return G2tmt
