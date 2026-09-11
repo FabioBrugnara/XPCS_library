@@ -9,26 +9,7 @@ import warnings
 import os
 os.environ["MKL_INTERFACE_LAYER"] = "ILP64"
 
-# MKL library imports with Scipy fallbacks
-try:
-    from sparse_dot_mkl import dot_product_mkl, gram_matrix_mkl
-except ImportError:
-    warnings.warn(
-        "sparse_dot_mkl is not installed or available. "
-        "Falling back to standard SciPy matrix operations, which may be slower.",
-        ImportWarning
-    )
-
-    def dot_product_mkl(a, b, dense=False):
-        res = a @ b
-        return res.toarray() if dense and hasattr(res, "toarray") else res
-
-    def gram_matrix_mkl(a, dense=True, transpose=True):
-        if transpose:
-            res = a @ a.T
-        else:
-            res = a.T @ a
-        return res.toarray() if dense and hasattr(res, "toarray") else res
+from sparse_dot_mkl import dot_product_mkl, gram_matrix_mkl
 
 # Cython mean trace functions import fallback
 try:
@@ -367,14 +348,6 @@ def get_g2mt_fromling2(dt, g2, dg2=None):
         return np.array(t_multit), np.array(g2_multit), np.array(dg2_multit)
     else:
         return np.array(t_multit), np.array(g2_multit)
-
-def get_g2_mt(dt, g2):
-    '''
-    Alias for backwords compatibility of XPCS.get_g2mt_fromling2 .
-    Compute the multitau g2 from the g2 array.
-    '''
-    print('WARNING: get_g2_mt is deprecated. Use get_g2mt_fromling2 instead.')
-    return get_g2mt_fromling2(dt, g2)
 
 
 

@@ -8,95 +8,80 @@ from .config import config
 from .utils import theta2Q
 
 
+def get_Ip(data, itime, load_mask=None, Nfi=None, Nff=None, max_comp=False):
 
-def det_analysis(data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None, mask=None, load_mask=None, mask_geom=None, Nfi=None, Nff=None, max_plots=False, wide_plots=False, plot_center=False):
-    '''
-    Function that generates a number of different plots to create the mask! By default it generates the average flux per pixel map and histogram.
-    
-    Parameters
-    ----------
-        data: sparse.csr_matrix
-            Sparse matrix of the e4m detector data
-        itime: float
-            Integration time of the e4m detector
-        Ith_high: float
-            Threshold (above) for the mean photon flux of the pixels [ph/s/px]
-        Ith_low: float
-            Threshold (below) for the mean photon flux of the pixels [ph/s/px]
-        Imaxth_high: float
-            Maximum number of counts per pixel treshold [ph/px]
-        mask: np.array
-            If data.shape[1]==config["Npx"], is the mask to apply to the data for plotting and histogram generation.\n
-            If data.shape[1]!=config["Npx"], mask is assumed is the same used to load the data, thus mask.sum()==data.shape[1]. In this case mask is used to plot the correct X-Y profile.
-        mask_geom: list of dicts
-            List of geometries to mask. The function just plot the geometries on top of the XY profile.
-        Nfi: int
-            First frame to consider
-        Nff: int
-            Last frame to consider
-        max_plots: bool
-            If True, plot the maximum counts per pixel map and histogram.
-        wide_plots: bool
-            If True, plot the wide histogram of the mean flux per pixel and maximum counts per pixel (if max_plots is True).
-    '''
     # Fetch parameters from config
-    Nx, Ny = config["Nx"], config["Ny"]
-    X0, Y0 = config["X0"], config["Y0"]
     of_value4plot = config["of_value4plot"]
     total_px = config["Npx"]
 
     # CHECK data AND load_mask DIMENSION
-    if (data.shape[1] != total_px) and (load_mask is None):     raise ValueError('Data are masked at loading! Please provide the load_mask!')
-    if (load_mask is not None) and (mask is not None):         raise ValueError('Cannot apply mask to masked loaded data!')
-    if (data.shape[1] == total_px) and (load_mask is not None): raise ValueError('Cannot use load_mask with already masked data!')
-    if load_mask is not None:
-        if (data.shape[1] != load_mask.sum()):             raise ValueError('The load_mask does not match the data.shape[1]! Please check the mask dimensions!')
+    if (data.shape[1] != total_px) and (load_mask is None):            raise ValueError('Data are masked at loading! Please provide the load_mask!')
+    if (load_mask is not None) and (data.shape[1] != load_mask.sum()): raise ValueError('The load_mask does not match the data.shape[1]! Please check the mask dimensions!')
     
     # LOAD DATA in Nfi:Nff
     data = data[Nfi:Nff]
 
-    # GENERATE MASK
-    if mask is None: mask = np.ones(total_px, dtype=bool)
-
     # COMPUTE THE MEAN FLUX PER PX [ph/s/px]
-    I_mean = np.ones(total_px) * of_value4plot
-    if load_mask is None:
-        I_mean[mask]      = data[:,mask].sum(axis=0)/(itime*data.shape[0])
-    else:
-        I_mean[load_mask] = data.sum(axis=0)        /(itime*data.shape[0])
-        mask = load_mask
+    Ip = np.ones(total_px) * of_value4plot
+    if load_mask is None: Ip            = data.sum(axis=0)/(itime*data.shape[0])
+    else:                 Ip[load_mask] = data.sum(axis=0)/(itime*data.shape[0])
 
     # COMPUTE THE MAXIMUM COUNTS PER PX [ph/px] (only if needed)
-    if (Imaxth_high is not None) or max_plots:
-        I_max = np.ones(total_px) * of_value4plot
-        if data.shape[1] == total_px: I_max[mask] = (data[:,mask].max(axis=0)).toarray()
-        else:                        I_max[mask] = (data.max(axis=0)).toarray()
+    if max_comp:
+        Ip_max = np.ones(total_px) * of_value4plot
+        if load_mask is None: Ip_max            = (data.max(axis=0)).toarray()
+        else:                 Ip_max[load_mask] = (data.max(axis=0)).toarray()
+
+    if not max_comp: return Ip
+    else:            return Ip, Ip_max
+
+
+
+
+def plot_Ip(Ip, Ip_max=None, mask=None, I1=None, I2=None, Imax1=None, Imax2=None, mask_geom=None):
+    '''
+    Function that generates different plots to create the mask! By default it generates the average flux per pixel map and histogram.
+    '''
+    # Fetch parameters from config
+    Nx, Ny = config["Nx"], config["Ny"]
+    of_value4plot = config["of_value4plot"]
+    total_px = config["Npx"]
+
+    # CHECK mask DIMENSION
+    if mask is not None:
+        if mask.size != total_px:
+            raise ValueError("mask must have config['Npx'] elements!")
+
+    if mask is None: mask = Ip != of_value4plot
+    else:            mask = (Ip != of_value4plot) & mask
 
     # PRINT INFORMATIONS    
     print('################################################################################')
-    print('Maximum count in the whole run ->', data.max())
-    if Ith_high is not None: print('# of pixels above Ith_high treshold -> ', I_mean[mask][I_mean[mask]>Ith_high].shape[0], 'pixels (of', I_mean.shape[0], '=>', round(I_mean[mask][I_mean[mask]>Ith_high].shape[0]/I_mean[mask].shape[0]*100, 2), '%)')
-    if Ith_low is not None: print('# of pixels below Ith_low treshold -> ',   I_mean[mask][I_mean[mask]<Ith_low].shape[0], 'pixels (of', I_mean.shape[0], '=>', round(I_mean[mask][I_mean[mask]<Ith_low].shape[0]/I_mean[mask].shape[0]*100, 2), '%)')
-    if Imaxth_high is not None: print('# of pixels above Imaxth_high treshold -> ', I_max[mask][I_max[mask]>Imaxth_high].shape[0], 'pixels (of', I_max.shape[0], '=>', round(I_max[mask][I_max[mask]>Imaxth_high].shape[0]/I_max.shape[0]*100, 2), '%)')
+    if I2 is not None: print('# of pixels above I2 treshold -> ', Ip[mask][Ip[mask]>I2].shape[0], 'pixels (of', Ip.shape[0], '=>', round(Ip[mask][Ip[mask]>I2].shape[0]/Ip[mask].shape[0]*100, 2), '%)')
+    if I1 is not None: print('# of pixels below I1 treshold -> ',   Ip[mask][Ip[mask]<I1].shape[0], 'pixels (of', Ip.shape[0], '=>', round(Ip[mask][Ip[mask]<I1].shape[0]/Ip[mask].shape[0]*100, 2), '%)')
+    if (Ip_max is not None): print('Maximum count in the whole run ->', Ip_max.max())
+    if (Ip_max is not None) and (Imax1 is not None): print('# of pixels with max below Imax1 treshold -> ', Ip_max[mask][Ip_max[mask]<Imax1].shape[0], 'pixels (of', Ip_max.shape[0], '=>', round(Ip_max[mask][Ip_max[mask]<Imax1].shape[0]/Ip_max.shape[0]*100, 2), '%)')
+    if (Ip_max is not None) and (Imax2 is not None): print('# of pixels with max above Imax2 treshold -> ', Ip_max[mask][Ip_max[mask]>Imax2].shape[0], 'pixels (of', Ip_max.shape[0], '=>', round(Ip_max[mask][Ip_max[mask]>Imax2].shape[0]/Ip_max.shape[0]*100, 2), '%)')
     print('################################################################################\n')
 
     # MEAN FLUX PER PX FIGURE
     plt.figure(figsize=(8,13))
     ax4 = plt.subplot(211)
-    if Ith_high is None: vmax = I_mean[mask].max()
-    else:                vmax = Ith_high
-    if Ith_low is None:  vmin = I_mean[mask].min()
-    else:                vmin = Ith_low
-    im = ax4.imshow(I_mean.reshape(Nx, Ny), vmin=vmin, vmax=vmax, origin='lower')                                                                    # plot the mean flux per px 
+    if I2 is None: vmax = Ip[mask].max()
+    else:                vmax = I2
+    if I1 is None:  vmin = Ip[mask].min()
+    else:                vmin = I1
+    im = ax4.imshow(Ip.reshape(Nx, Ny), vmin=vmin, vmax=vmax, origin='lower')  # plot the mean flux per px 
     plt.colorbar(im, ax=ax4, label='Mean flux per pixel [ph/s/px]')                                                                                            
     ax4.set_xlabel('Y [px]')
     ax4.set_ylabel('X [px]')
     ax4.set_xlim(0, Ny)
     ax4.set_ylim(0, Nx)  
-    if plot_center:
-        ax4.plot(Y0, X0, 'ro', markersize=10)                                                                                                                   # plot the beam center
-    if mask_geom is not None:                                                                                                                               # plot the mask geometry (mask_geom)
-        for obj in mask_geom:                                                                                                                               # loop over the objects ...  
+    if (config["X0"] is not None) and (config["Y0"] is not None):
+        ax4.plot(config["Y0"], config["X0"], 'ro', markersize=10) # plot the beam center
+
+    if mask_geom is not None: # plot the mask geometry (mask_geom)
+        for obj in mask_geom: # loop over the objects ...  
             if obj['geom'] == 'Circle':
                 ax4.add_artist(plt.Circle((obj['Cy'], obj['Cx']), obj['r'], color='r', fill=False))
             elif obj['geom'] == 'Rectangle':
@@ -108,61 +93,61 @@ def det_analysis(data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None, mas
                 ax4.add_artist(plt.plot(xx, mm*xx+qq+int(obj['linewidth']/2), color='r')[0])
                 ax4.add_artist(plt.plot(xx, mm*xx+qq-int(obj['linewidth']/2), color='r')[0])
 
-    # MEAN FLUX PER PX HISTOGRAM (ZOOM)
-    ax5 = plt.subplot(413)                                                                                                                                  # create the subplot
-    if (Ith_high is not None) and (Ith_low is not None): ax5.hist(I_mean[mask], bins=200, range=(Ith_low*.5, Ith_high*1.5),       label='pixels')           # plot the histogram
-    elif (Ith_high is not None) and (Ith_low is None):   ax5.hist(I_mean[mask], bins=200, range=(0, Ith_high*1.5),                label='pixels')           # ..
-    elif (Ith_high is None) and (Ith_low is not None):   ax5.hist(I_mean[mask], bins=200, range=(Ith_low*.5, I_mean[mask].max()), label='pixels')           # ..
-    else:                                                ax5.hist(I_mean[mask], bins=200,                                         label='pixels')     # ..
-    if Ith_high is not None: ax5.axvline(Ith_high, color='r', label='Higher treshold')                                                                             # plot the Ith_high limit
-    if Ith_low is not None:  ax5.axvline(Ith_low,  color='g', label='Lower treshold')                                                                              # plot the Ith_low limit
-    ax5.set_yscale('log')                                                                                                                                   # add the labels and legend
-    ax5.set_xlabel('Mean flux per pixel [ph/s/px]')                                                                                                          # ..   
-    ax5.legend()                                                                                                                                            # ..        
+    # MEAN FLUX PER PX HISTOGRAM
 
-    # MEAN FLUX PER PX HISTOGRAM (FULL RANGE)
-    if wide_plots:
-        ax6 = plt.subplot(414)                                                                                                                              # create the subplot
-        ax6.hist(I_mean[mask], bins=200, label='(full range)')                                                                                              # plot the histogram    
-        if Ith_high is not None: ax6.axvline(Ith_high, color='r', label='Higher treshold')
-        if Ith_low  is not None: ax6.axvline(Ith_low,  color='g', label='Lower treshold')
-        ax6.set_yscale('log')
-        ax6.set_xlabel('Mean flux per pixel [ph/s/px]')
-        ax6.legend()
+    # Compute fallback limits only if needed
+    d_min = Ip[mask].min() if (I1 is None and I2 is not None) else None
+    d_max = Ip[mask].max() if (I2 is None and I1 is not None) else None
+
+    r_min = I1 * 0.5 if I1 is not None else d_min
+    r_max = I2 * 1.5 if I2 is not None else d_max
+
+    # Pass tuple only if at least one bound was defined
+    hist_range = (r_min, r_max) if (r_min is not None and r_max is not None) else None
+
+    ax5 = plt.subplot(413)
+    ax5.hist(Ip[mask], bins=200, range=hist_range, label='pixels')
+
+    if I2 is not None: ax5.axvline(I2, color='r', label='I2') # plot the I2 limit
+    if I1 is not None: ax5.axvline(I1,  color='g', label='I1') # plot the I1 limit
+    ax5.set_yscale('log')                                                                                                                                  
+    ax5.set_xlabel('Mean flux per pixel [ph/s/px]')                                                                                                      
+    ax5.legend()                                                                                                                                           
+
 
     plt.tight_layout(); plt.show()
 
     # MAXIMUM COUNTS PER PX FIGURE
-    if max_plots:
+    if Ip_max is not None:
+
+        if Imax2 is None: Imax2 = Ip_max[mask].max()
+
         plt.figure(figsize=(8,13))
         ax4 = plt.subplot(211)
-
+        
         # MAX COUNTS PER PX IMAGE
-        im = ax4.imshow(I_max.reshape(Nx, Ny), vmin=0, vmax=Imaxth_high, origin='lower')
+        im = ax4.imshow(Ip_max.reshape(Nx, Ny), vmin=Imax1, vmax=Imax2, origin='lower')
         plt.colorbar(im, ax=ax4, label='Max counts per pixel [ph/px]')
         ax4.set_xlabel('Y [px]')
         ax4.set_ylabel('X [px]')
 
-        # MAX COUNTS PER PX HISTOGRAM (ZOOM)
-        ax5 = plt.subplot(413)
-        if Imaxth_high is not None: 
-            ax5.hist(I_max[mask], bins=100, label='pixels', range=(0, Imaxth_high*1.5))
-            ax5.axvline(Imaxth_high, color='r', label='Higher max treshold')
-        else:
-            ax5.hist(I_max[mask], bins=100, label='pixels')
+        # MAX COUNTS PER PX HISTOGRAM
+        d_max = Ip_max[mask].max() if (Imax2 is None and Imax1 is not None) else None
 
-        # add labels and legend
+        r_min = 0
+        r_max = Imax2 * 1.5 if Imax2 is not None else d_max
+
+        hist_range = (r_min, r_max) if (r_min is not None and r_max is not None) else None
+
+        ax5 = plt.subplot(413)
+        ax5.hist(Ip_max[mask], bins=200, range=hist_range, label='pixels')
+        if Imax2 is not None: ax5.axvline(Imax2, color='r', label='Imax2') # plot the Imax2 limit
+        if Imax1 is not None: ax5.axvline(Imax1, color='g', label='Imax1') # plot the Imax1 limit
+
         ax5.set_yscale('log')
         ax5.set_xlabel('Max counts per pixel [ph/px]')
         ax5.legend()
 
-        # MAX COUNTS PER PX HISTOGRAM (FULL RANGE)
-        if wide_plots:
-            ax6 = plt.subplot(414)
-            ax6.hist(I_max[mask], bins=200, label='pixels')
-            ax6.set_yscale('log')
-            ax6.set_xlabel('Max counts per pixel [ph/px]')
-            ax6.legend()
 
         plt.tight_layout()
         plt.show()
@@ -170,77 +155,22 @@ def det_analysis(data, itime, Ith_high=None, Ith_low=None, Imaxth_high=None, mas
 
 
 
-def gen_mask(data=None, itime=None, load_mask=None, mask=None, mask_geom=None, Ith_high=None, Ith_low=None, Imaxth_high=None, Nfi=None, Nff=None):
+def get_mask(Ip=None, Ip_max=None, I2=None, I1=None, Imax1=None, Imax2=None, mask=None, mask_geom=None):
     '''
     Generate a mask for the e4m detector from various options. The function plot the so-obtained mask, and also return some histograms to look at the results (if hist_plots is True).
-
-    Parameters
-    ----------
-    data: sparse.csc_matrix
-        Sparse matrix of the e4m detector data
-    itime: float
-        Integration time of the e4m detector
-    mask: np.array
-        Mask of the e4m detector lines (slightly wider than the overflow lines, as pixels on the adges are not reliable)
-    mask_geom: list of dicts
-        List of geometries to mask (in dictionary form). The supported objects are:\n
-        - Circle: {'geom': 'Circle', 'Cx': x0, 'Cy': y0, 'r': r, 'inside': True/False}\n
-        - Rectangle: {'geom': 'Rectangle', 'x0': x0, 'y0': y0, 'xl': xl, 'yl': yl, 'inside': True/False}\n
-        Example:\n
-        mask_geom = [   {'geom': 'Circle', 'Cx': 100, 'Cy': 100, 'r': 10, 'inside': True}, {'geom': 'Rectangle', 'x0': 50, 'y0': 50, 'xl': 20, 'yl': 10, 'inside': False}]
-    Ith_high: float
-        Threshold (above) for the mean photon flux of the pixels
-    Ith_low: float
-        Threshold (below) for the mean photon flux of the pixels
-    Imaxth_high: float
-        Maximum number of counts per pixel treshold
-    Nfi: int
-        First frame to consider
-    Nff: int
-        Last frame to consider  
-
-    Returns
-    -------
-    np.array
-        Mask of the e4m detector
     '''
     Nx, Ny = config["Nx"], config["Ny"]
     total_px = config["Npx"]
 
-    # CHECK data DIMENSION & LOAD DATA in Nfi:Nff
-    if data is not None:
-        if load_mask is not None:
-            load_mask = np.asarray(load_mask, dtype=bool).ravel()
-
-            if load_mask.size != total_px:
-                raise ValueError(
-                    "load_mask must have config['Npx'] elements!"
-                )
-
-            if data.shape[1] != load_mask.sum():
-                raise ValueError(
-                    "load_mask does not match the number of loaded pixels!"
-                )
-        elif data.shape[1] != total_px:
-            raise ValueError(
-                "Cannot generate a mask from already masked data "
-                "without providing load_mask!"
-            )
-
-        data = data[Nfi:Nff]
 
     # GENERATE MASK OF ONES
     if mask is None:
         mask = np.ones(total_px, dtype=bool)
     else:
+        if mask.size != total_px:
+            raise ValueError("mask must have config['Npx'] elements!")
         mask = np.asarray(mask, dtype=bool).ravel()
 
-    if mask.size != total_px:
-        raise ValueError("mask must have config['Npx'] elements!")
-
-    # Pixels not present in the loaded data cannot be used
-    if load_mask is not None:
-        mask &= load_mask
 
     # APPLAY GEOMETRIC MASKS (if mask_geom is not None)
     if (mask_geom is not None) and (mask_geom!=[]):
@@ -263,38 +193,18 @@ def gen_mask(data=None, itime=None, load_mask=None, mask=None, mask_geom=None, I
                     mask = mask * ~(((X>mm*Y+qq-int(obj['linewidth']/2))) & (X<mm*Y+qq+int(obj['linewidth']/2)))
         mask = mask.flatten()
 
-    # FILTER USING THRESHOLDS AND COMPUTE STATISTICS
-    if data is not None:
-        if load_mask is None:
-            data_mask = np.ones(total_px, dtype=bool)
-        else:
-            data_mask = load_mask
+    # FILTER USING THRESHOLDS
+    if Ip is not None:
+        if I2 is not None:
+            mask &= Ip <= I2
+        if I1 is not None:
+            mask &= Ip >= I1
 
-        if (Ith_high is not None) or (Ith_low is not None):
-            I_mean_loaded = np.asarray(
-                data.sum(axis=0)
-            ).ravel() / (itime * data.shape[0])
-
-            I_mean = np.zeros(total_px, dtype=float)
-            I_mean[data_mask] = I_mean_loaded
-
-            if Ith_high is not None:
-                mask &= I_mean <= Ith_high
-            if Ith_low is not None:
-                mask &= I_mean >= Ith_low
-
-        if (Imaxth_high is not None):
-            I_max_loaded = np.asarray(
-                data.max(axis=0).toarray()
-                if hasattr(data.max(axis=0), "toarray")
-                else data.max(axis=0)
-            ).ravel()
-
-            I_max = np.zeros(total_px, dtype=float)
-            I_max[data_mask] = I_max_loaded
-
-            if Imaxth_high is not None:
-                mask &= I_max <= Imaxth_high
+    if Ip_max is not None:
+        if Imax2 is not None:
+            mask &= Ip_max <= Imax2
+        if Imax1 is not None:
+            mask &= Ip_max >= Imax1
 
     # PRINT PERCENTAGE OF MASKED PIXELS
     print('#################################################')
@@ -314,7 +224,7 @@ def gen_mask(data=None, itime=None, load_mask=None, mask=None, mask_geom=None, I
 
 
 
-def gen_Qmask(theta, Q, dq, Qmap_plot=False):
+def get_Qmask(theta, Q, dq, Qmap_plot=False):
     '''
     Generate the Q masks for the given Q values at the working angle. The function also plot the Qmap for the given energy and angle (if Qmap_plot is True).
 

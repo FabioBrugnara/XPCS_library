@@ -12,7 +12,7 @@ import numexpr as ne
 import matplotlib.pyplot as plt
 import scipy.sparse as sparse
 from tqdm import tqdm
-from scipy.ndimage import gaussian_filter, gaussian_filter1d
+from scipy.ndimage import gaussian_filter1d
 from joblib import Parallel, delayed
 
 # Internal imports from matrix_comp
@@ -100,6 +100,36 @@ def _G2t2G2tmt(G2t, type, ch_depth):
     return G2tmt
 
 
+
+
+def _process_sparse_block(N: int, Itp, sparse_depth: int, ch_depth: int, N_sparseloops: int):
+    """Processes a single sparse block N independently across worker threads/processes.
+       Outputs the dense frame sums and G2tmt correlations for the block.
+    """
+    S = 2**sparse_depth
+    ch_step = 2**(sparse_depth - ch_depth)
+    n_dense_rows = 2**(ch_depth - 1)
+
+    # Extract slice for current block N
+    ItpN = Itp[N * S : (N + 1) * S]
+
+    # Calculate dense frame sums for block N
+    dense_rows = np.zeros((n_dense_rows, Itp.shape[1]), dtype=np.float32)
+    for ch in range(0, 2**ch_depth, 2):
+        dense_rows[ch // 2] = ItpN[ch * ch_step : (ch + 2) * ch_step].sum(axis=0)
+
+    # Calculate symmetric G2t correlation
+    G2t_sym = _get_symG2t(ItpN)
+    G2tmt_sym = _G2t2G2tmt(G2t_sym, type='sym', ch_depth=ch_depth)
+
+    # Calculate non-symmetric G2t correlation with adjacent block N+1
+    G2tmt_nonsym = None
+    if N != N_sparseloops - 1:
+        ItpN_next = Itp[(N + 1) * S : (N + 2) * S]
+        G2t_nonsym = _get_nonsymG2t(ItpN, ItpN_next)
+        G2tmt_nonsym = _G2t2G2tmt(G2t_nonsym, type='non-sym', ch_depth=ch_depth)
+
+    return N, dense_rows, G2tmt_sym, G2tmt_nonsym
 
 
 
@@ -230,6 +260,7 @@ def get_G2tmt_4sparse(data, sparse_depth: int, ch_depth: int = 4, Nfi: int = 0, 
 
 
 
+
 def plot_G2tmt(G2tmt, itime, vmin, vmax, lower_corr=4, upper_corr=None, yscale='log', filter_layer=None, borders=False, xlims=None, vlines=None):
     """
     Plot a multi-tau correlation matrix (G2tmt) using broken bar plot.
@@ -310,7 +341,6 @@ def get_g2mt(itime, G2tmt):
 
 
 
-
 def get_g2mt_cut(itime, G2tmt, t1, t2):
     """
     Calculate time delays and mean g2 cut within a time window [t1, t2].
@@ -340,34 +370,5 @@ def get_g2mt_cut(itime, G2tmt, t1, t2):
                     dg2mt_cut.append(np.std(G2tmt[corr][ch][mask]) / np.sqrt(G2tmt[corr][ch][mask].size))
 
     return np.array(t_g2mt), np.array(g2mt_cut), np.array(dg2mt_cut)
-
-
-
-def _process_sparse_block(N: int, Itp, sparse_depth: int, ch_depth: int, N_sparseloops: int):
-    """Processes a single sparse block N independently across worker threads/processes."""
-    S = 2**sparse_depth
-    ch_step = 2**(sparse_depth - ch_depth)
-    n_dense_rows = 2**(ch_depth - 1)
-
-    # Extract slice for current block N
-    ItpN = Itp[N * S : (N + 1) * S]
-
-    # Calculate dense frame sums for block N
-    dense_rows = np.zeros((n_dense_rows, Itp.shape[1]), dtype=np.float32)
-    for ch in range(0, 2**ch_depth, 2):
-        dense_rows[ch // 2] = ItpN[ch * ch_step : (ch + 2) * ch_step].sum(axis=0)
-
-    # Calculate symmetric G2t correlation
-    G2t_sym = _get_symG2t(ItpN)
-    G2tmt_sym = _G2t2G2tmt(G2t_sym, type='sym', ch_depth=ch_depth)
-
-    # Calculate non-symmetric G2t correlation with adjacent block N+1
-    G2tmt_nonsym = None
-    if N != N_sparseloops - 1:
-        ItpN_next = Itp[(N + 1) * S : (N + 2) * S]
-        G2t_nonsym = _get_nonsymG2t(ItpN, ItpN_next)
-        G2tmt_nonsym = _G2t2G2tmt(G2t_nonsym, type='non-sym', ch_depth=ch_depth)
-
-    return N, dense_rows, G2tmt_sym, G2tmt_nonsym
 
 
