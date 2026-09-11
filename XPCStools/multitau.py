@@ -320,61 +320,7 @@ def plot_G2tmt(G2tmt, itime, vmin, vmax, lower_corr=4, upper_corr=None, yscale='
 
 
 
-def get_g2mt(itime, G2tmt):
-    """
-    Calculate time delays, mean, and standard error of g2 values for multi-tau XPCS.
-    """
-    N_corr, N_ch = len(G2tmt), len(G2tmt[0])
-
-    t_g2mt, g2mt, dg2mt = [], [], []
-    for corr in range(N_corr):
-        for ch in range(N_ch):
-            if (ch == 0) or ((corr > 0) and (ch < N_ch // 2)):
-                pass
-            else:
-                t_g2mt.append(itime * 2**corr * ch)
-                g2mt.append(np.mean(G2tmt[corr][ch]))
-                dg2mt.append(np.std(G2tmt[corr][ch]) / np.sqrt(G2tmt[corr][ch].size))
-
-    return np.array(t_g2mt), np.array(g2mt), np.array(dg2mt)
-
-
-
-
-def get_g2mt_cut(itime, G2tmt, t1, t2):
-    """
-    Calculate time delays and mean g2 cut within a time window [t1, t2].
-    """
-
-    if t1 is None:
-        t1 = 0
-    if t2 is None:
-        t2 = np.inf
-
-    N_corr, N_ch = len(G2tmt), len(G2tmt[0])
-
-    t_g2mt, g2mt_cut, dg2mt_cut = [], [], []
-    for corr in range(N_corr):
-        itime_corr = itime * 2**corr
-        for ch in range(N_ch):
-            if (ch == 0) or ((corr > 0) and (ch < N_ch // 2)):
-                pass
-            else:
-                x = np.arange(G2tmt[corr][ch].size) * itime_corr + (1 + ch) * itime_corr / 2
-                dx = itime_corr
-                mask = ((x - dx / 2) >= t1) & ((x + dx / 2) <= t2)
-
-                if mask.sum() != 0:
-                    t_g2mt.append(itime * 2**corr * ch)
-                    g2mt_cut.append(np.mean(G2tmt[corr][ch][mask]))
-                    dg2mt_cut.append(np.std(G2tmt[corr][ch][mask]) / np.sqrt(G2tmt[corr][ch][mask].size))
-
-    return np.array(t_g2mt), np.array(g2mt_cut), np.array(dg2mt_cut)
-
-
-import numpy as np
-
-def compute_g2mt_XX(itime, G2tmt, t1=None, t2=None):
+def compute_g2mt(itime, G2tmt, t1=None, t2=None):
     """
     Calculate time delays, mean, and standard error of g2 values for multi-tau XPCS.
     Optionally cuts/filters the data within a time window [t1, t2].

@@ -29,7 +29,6 @@ from .multitau import (
     get_G2tmt_4sparse,
     plot_G2tmt,
     get_g2mt,
-    get_g2mt_cut,
 )
 
 from .utils import (
@@ -62,7 +61,6 @@ __all__ = [
     "get_G2tmt_4sparse",
     "plot_G2tmt",
     "get_g2mt",
-    "get_g2mt_cut",
     # Utilities
     "E2lambda",
     "lambda2E",
