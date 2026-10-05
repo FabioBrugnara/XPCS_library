@@ -10,7 +10,7 @@ class ConfigDict(dict):
 
     def __setitem__(self, key, value):
             if key == "movement_axis" and value is not None:
-                if str(value).upper() not in ("X", "Y"):
+                if str(value).upper() not in ("X", "Y", "-X", "-Y"):
                     raise ValueError(f"Invalid movement_axis '{value}'. Must be 'X' or 'Y'.")
                 value = str(value).upper()  # Ensures uppercase 'X' or 'Y'
             super().__setitem__(key, value)

@@ -2,6 +2,8 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.sparse as sparse
+from sparse_dot_mkl import dot_product_mkl
 
 # Import configuration dictionary and helpers
 from .config import config
@@ -105,7 +107,7 @@ def plot_Ip(Ip, Ip_max=None, mask=None, I1=None, I2=None, Imax1=None, Imax2=None
     hist_range = (r_min, r_max) if (r_min is not None and r_max is not None) else None
 
     ax5 = plt.subplot(413)
-    ax5.hist(Ip[mask], bins=200, range=hist_range, label='pixels')
+    ax5.hist(Ip[mask], bins=123, range=hist_range, label='pixels')
 
     if I2 is not None: ax5.axvline(I2, color='r', label='I2') # plot the I2 limit
     if I1 is not None: ax5.axvline(I1,  color='g', label='I1') # plot the I1 limit
@@ -261,6 +263,15 @@ def get_Qmask(theta, Q, dq, Qmap_plot=False):
         dX0 = L * np.tan(np.deg2rad(theta))
         dX0_map = np.sqrt(((dX0 - (X - X0) * lxp))**2 + ((Y - Y0) * lyp)**2)
         theta_map = np.arctan(dX0_map / L)
+    elif movement_axis =='-Y':
+        dY0 = L * np.tan(np.deg2rad(theta))
+        dY0_map = np.sqrt(((X - X0) * lxp)**2 + ((-dY0 - (Y - Y0) * lyp))**2)
+        theta_map = np.arctan(dY0_map / L)
+    elif movement_axis =='-X':
+        dX0 = L * np.tan(np.deg2rad(theta))
+        dX0_map = np.sqrt(((-dX0 - (X - X0) * lxp))**2 + ((Y - Y0) * lyp)**2)
+        theta_map = np.arctan(dX0_map / L)
+        
     Q_map = theta2Q(config["Ei"], np.rad2deg(theta_map))
 
     # GET THE Q REGION
@@ -295,3 +306,20 @@ def get_Qmask(theta, Q, dq, Qmap_plot=False):
         plt.tight_layout(); plt.show()
 
     return Qmask
+
+
+def bin_det(data, Npx_bin):
+    
+    Nx = config["Nx"]
+    Ny = config["Ny"]
+
+    BIN_Y = sparse.csr_array((np.ones(data.shape[1]), (np.arange(data.shape[1]), np.arange(data.shape[1])//Npx_bin)), dtype=np.float32)
+
+    r1 = np.hstack([np.arange(Ny//Npx_bin)+i*Npx_bin*Ny//Npx_bin for i in range(0,Nx//Npx_bin)])
+    R = np.hstack([r1+i*Ny//Npx_bin for i in range(Npx_bin)])
+
+    C = np.hstack([np.arange(len(r1))]*Npx_bin)
+
+    BIN_X = sparse.csr_array((np.ones(len(R)), (R, C)), dtype=np.float32)
+
+    return dot_product_mkl(dot_product_mkl(data, BIN_Y), BIN_X)

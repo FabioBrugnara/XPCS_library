@@ -13,7 +13,8 @@ from .det_analysis import (
     get_Ip,
     plot_Ip,
     get_mask,
-    get_Qmask
+    get_Qmask,
+    bin_det
 )
 
 from .matrix_comp import (
@@ -27,10 +28,12 @@ from .matrix_comp import (
 
 from .multitau import (
     get_G2tmt_4sparse,
+    get_G2tmt_4sparse_wl,
     plot_G2tmt,
     get_g2mt,
     save_G2tmt,
-    load_G2tmt
+    load_G2tmt,
+    mt_corr
 )
 
 from .utils import (
@@ -39,6 +42,12 @@ from .utils import (
     theta2Q,
     Q2theta,
     decorrelation_f,
+)
+
+from .Sq_utils import (
+    get_Sq,
+    plot_time_Sq,
+    plot_temperature_Sq,
 )
 
 __version__ = "0.1.0"
@@ -52,6 +61,7 @@ __all__ = [
     "plot_Ip",
     "get_mask",
     "get_Qmask",
+    "bin_det",
     # Matrix Computation & Standard Correlation
     "get_It",
     "get_Itp_bin",
@@ -65,11 +75,16 @@ __all__ = [
     "get_g2mt",
     "save_G2tmt",
     "load_G2tmt",
+    "get_G2tmt_4sparse_wl",
+     "mt_corr",
     # Utilities
     "E2lambda",
     "lambda2E",
     "theta2Q",
     "Q2theta",
     "decorrelation_f",
+    # Sq_utils
+    "get_Sq",
+    "plot_Sq"
     
 ]

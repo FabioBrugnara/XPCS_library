@@ -49,7 +49,7 @@ def set_beamline(beamline_toset):
 ########### GAMMA RAY FILTER ###############
 ############################################
 
-def fast_gamma_filter(e4m_data, Imaxth_high, mask=None, info=False, itime=None):
+def fast_gamma_filter(e4m_data, Imaxth_high, info=False, itime=None):
     '''
     Fast gamma ray filter for E4M data.
 
@@ -76,12 +76,6 @@ def fast_gamma_filter(e4m_data, Imaxth_high, mask=None, info=False, itime=None):
         Filtered E4M data.
     '''
 
-    if mask is not None:
-        t0 = time.time()
-        print('Masking data (set 0s on ~mask pixels) ...')
-        e4m_data = e4m_data*mask
-        e4m_data.eliminate_zeros()
-        print('Done! (elapsed time =', round(time.time()-t0, 2), 's)')
 
     t0 = time.time()
     print('Filtering gamma ray signal (i.e. signals over treshold) ...')

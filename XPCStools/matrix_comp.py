@@ -83,37 +83,48 @@ def get_It(data, Lbin=None, Nstep=None):
 
 
 
-def get_Itp_bin(data, Lbin, bin2dense=False):
+
+def get_Itp_bin(data, Lbin, bin2dense=False, verbose=True):
 
     # LOAD DATA
-    t0 = time.time()
-    print('Loading frames ...')
+    if verbose:
+        t0 = time.time()
+        print('Loading frames ...')
     Itp = data
     # convert to float32
-    if Itp.dtype != np.float32:
-        Itp = Itp.astype(np.float32)
-    print('Done! (elapsed time =', round(time.time()-t0, 2), 's)')
+    #if Itp.dtype != np.float32:
+    #    Itp = Itp.astype(np.float32)
+    if verbose:
+        print('Done! (elapsed time =', round(time.time()-t0, 2), 's)')
 
     # BIN DATA
-    t0 = time.time()
-    print('Binning frames (Lbin = '+str(Lbin)+', using MKL library) ...')
-    Itp = (Itp[:Itp.shape[0]//Lbin*Lbin]) # throw the last frames 
+    if verbose:
+        t0 = time.time()
+        print('Binning frames (Lbin = '+str(Lbin)+', using MKL library) ...')
+    if Itp.shape[0]%Lbin != 0:
+        if verbose:
+            print('Warning: The number of frames is not divisible by Lbin. The last frames will be discarded.')
+            print('Discarding the last', Itp.shape[0]%Lbin, 'frames.')
+        Itp = (Itp[:Itp.shape[0]//Lbin*Lbin]) # throw the last frames 
+
     BIN_matrix = sparse.csr_array((np.ones(Itp.shape[0]), (np.arange(Itp.shape[0])//Lbin, np.arange(Itp.shape[0]))), dtype=np.float32)
     Itp = dot_product_mkl(BIN_matrix, Itp, dense=bin2dense)
-    print('Done! (elapsed time =', round(time.time()-t0, 2), 's)')
-    print('\t | '+str(Itp.shape[0])+' frames X '+str(Itp.shape[1])+' pixels')
-    if isinstance(Itp, (sparse.sparray, sparse.spmatrix)):
-        print('\t | sparsity = {:.2e}'.format(Itp.data.size/(Itp.shape[0]*Itp.shape[1])))
-        print('\t | memory usage (sparse.csr_array @ '+str(Itp.dtype)+') =', round((Itp.data.nbytes+Itp.indices.nbytes+Itp.indptr.nbytes)/1024**3, 3), 'GB')
-    else:
-        print('\t | memory usage (np.array @ '+str(Itp.dtype)+') =', round(Itp.nbytes/1024**3, 3), 'GB')
+
+    if verbose:
+        print('Done! (elapsed time =', round(time.time()-t0, 2), 's)')
+        print('\t | '+str(Itp.shape[0])+' frames X '+str(Itp.shape[1])+' pixels')
+        if isinstance(Itp, (sparse.sparray, sparse.spmatrix)):
+            print('\t | sparsity = {:.2e}'.format(Itp.data.size/(Itp.shape[0]*Itp.shape[1])))
+            print('\t | memory usage (sparse.csr_array @ '+str(Itp.dtype)+') =', round((Itp.data.nbytes+Itp.indices.nbytes+Itp.indptr.nbytes)/1024**3, 3), 'GB')
+        else:
+            print('\t | memory usage (np.array @ '+str(Itp.dtype)+') =', round(Itp.nbytes/1024**3, 3), 'GB')
 
     return Itp
 
 
 
 
-def get_G2t(data, Lbin=None, bin2dense=False):
+def get_G2t(data, Lbin=None, bin2dense=False, verbose=True):
     '''
     Compute the G2t matrix from the e4m, properly masked with the matrix mask.
 
@@ -138,29 +149,35 @@ def get_G2t(data, Lbin=None, bin2dense=False):
     
     # BIN DATA
     if Lbin is not None:
-        print('Binning frames (Lbin = '+str(Lbin)+', using MKL library) ...')
+        if verbose:
+            t0 = time.time()
+            print('Binning frames (Lbin = '+str(Lbin)+', using MKL library) ...')
         Itp = (Itp[:Itp.shape[0]//Lbin*Lbin]) # throw the last frames 
         BIN_matrix = sparse.csr_array((np.ones(Itp.shape[0]), (np.arange(Itp.shape[0])//Lbin, np.arange(Itp.shape[0]))), dtype=np.float32)
         Itp = dot_product_mkl(BIN_matrix, Itp, dense=bin2dense)
-        print('Done! (elapsed time =', round(time.time()-t0, 2), 's)')
-        print('\t | '+str(Itp.shape[0])+' frames X '+str(Itp.shape[1])+' pixels')
-        if isinstance(Itp, (sparse.sparray, sparse.spmatrix)):
-            print('\t | sparsity = {:.2e}'.format(Itp.data.size/(Itp.shape[0]*Itp.shape[1])))
-            print('\t | memory usage (sparse.csr_array @ '+str(Itp.dtype)+') =', round((Itp.data.nbytes+Itp.indices.nbytes+Itp.indptr.nbytes)/1024**3, 3), 'GB')
-        else:
-            print('\t | memory usage (np.array @ '+str(Itp.dtype)+') =', round(Itp.nbytes/1024**3, 3), 'GB')
-    
+        if verbose:
+            print('Done! (elapsed time =', round(time.time()-t0, 2), 's)')
+            print('\t | '+str(Itp.shape[0])+' frames X '+str(Itp.shape[1])+' pixels')
+            if isinstance(Itp, (sparse.sparray, sparse.spmatrix)):
+                print('\t | sparsity = {:.2e}'.format(Itp.data.size/(Itp.shape[0]*Itp.shape[1])))
+                print('\t | memory usage (sparse.csr_array @ '+str(Itp.dtype)+') =', round((Itp.data.nbytes+Itp.indices.nbytes+Itp.indptr.nbytes)/1024**3, 3), 'GB')
+            else:
+                print('\t | memory usage (np.array @ '+str(Itp.dtype)+') =', round(Itp.nbytes/1024**3, 3), 'GB')
+        
     # Compute G2t
     t0 = time.time()
-    print('Computing G2t (using MKL library)...')
+    if verbose:
+        print('Computing G2t (using MKL library)...')
     G2t = gram_matrix_mkl(Itp, dense=True, transpose=True)
-    print('Done! (elapsed time =', round(time.time()-t0, 2), 's)')
-    print('\t | '+str(G2t.shape[0])+' X '+str(G2t.shape[1])+' squared matrix')
-    print('\t | memory usage (np.array @ '+str(G2t.dtype)+') =', round(G2t.nbytes/1024**3, 3), 'GB')
-           
+    if verbose:
+        print('Done! (elapsed time =', round(time.time()-t0, 2), 's)')
+        print('\t | '+str(G2t.shape[0])+' X '+str(G2t.shape[1])+' squared matrix')
+        print('\t | memory usage (np.array @ '+str(G2t.dtype)+') =', round(G2t.nbytes/1024**3, 3), 'GB')
+            
     # Normalize G2t
     t0 = time.time()
-    print('Normalizing G2t (using NumExpr library)...')
+    if verbose:
+        print('Normalizing G2t (using NumExpr library)...')
     It = Itp.sum(axis=1, dtype=np.float32)
     np.divide(np.sqrt(Itp.shape[1]), It, where=It > 0, out=It, dtype=np.float32)
     Itr = It[:, None] # q[:, None] -> q.reshape(N, 1)
@@ -171,7 +188,8 @@ def get_G2t(data, Lbin=None, bin2dense=False):
     G2t[G2t.diagonal() == 0, :] = 1
     G2t[:, G2t.diagonal() == 0] = 1
     np.fill_diagonal(G2t, 0)
-    print('Done! (elapsed time =', round(time.time()-t0, 2), 's)\n')
+    if verbose:
+        print('Done! (elapsed time =', round(time.time()-t0, 2), 's)\n')
     return G2t
 
 
@@ -179,7 +197,7 @@ def get_G2t(data, Lbin=None, bin2dense=False):
 ######### COMUPTE G2t bunnched ###########
 ##########################################
 
-def get_G2t_bybunch(data, Nbunch, Lbin=None, bin2dense=False):
+def get_G2t_bybunch(data, Nbunch, bin2dense=False):
     '''
     Compute the G2t matrix from the e4m, bunching the frames in Nbunch bunches, thus averaging the G2t matrix over the bunches. 
     '''
@@ -188,13 +206,11 @@ def get_G2t_bybunch(data, Nbunch, Lbin=None, bin2dense=False):
     Lbunch = data.shape[0]//Nbunch
 
     # PREPARE THE G2t MATRIX
-    G2t = np.zeros((Lbunch//Lbin, Lbunch//Lbin), dtype=np.float64)
+    G2t = np.zeros((Lbunch, Lbunch), dtype=np.float64)
     
     # COMPUTE G2t FOR EACH BUNCH
     for i in range(Nbunch):
-        print('Computing G2t for bunch', i+1, '...')
-        G2t += get_G2t(data[i*Lbunch:(i+1)*Lbunch,:], Lbin=Lbin, bin2dense=bin2dense)
-        print('Done!\n')
+        G2t += get_G2t(data[i*Lbunch:(i+1)*Lbunch,:], Lbin=None, bin2dense=bin2dense, verbose=False)
 
     return G2t/Nbunch
 
