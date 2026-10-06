@@ -50,6 +50,11 @@ from .Sq_utils import (
     plot_temperature_Sq,
 )
 
+from .newtools import (
+    get_It_fast,
+    normalize_Itp,
+)
+
 __version__ = "0.1.0"
 
 __all__ = [
@@ -85,6 +90,11 @@ __all__ = [
     "decorrelation_f",
     # Sq_utils
     "get_Sq",
-    "plot_Sq"
+    "plot_Sq",
+    "plot_time_Sq",
+    "plot_temperature_Sq",
+    # New Tools
+    "get_It_fast",
+    "normalize_Itp",
     
 ]

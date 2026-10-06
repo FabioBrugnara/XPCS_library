@@ -615,10 +615,6 @@ def get_G2tmt_4sparse_wl(load_f, sparse_depth: int, ch_depth: int = 4, Nfi: int 
 
 
 
-
-
-
-
 @nb.njit(parallel=True, fastmath=True)
 def _csr_multi_channel_autocorr(data, indices, indptr, ch_arr):
     """
@@ -884,6 +880,8 @@ def _csc_temporal_bin2x(data, indices, indptr, n_rows):
             out_p += 1
 
     return new_data, new_indices, new_indptr
+
+
 
 def mt_corr(Itp, ch_depth=4, sparse_depth=None, verbose=True):
 
