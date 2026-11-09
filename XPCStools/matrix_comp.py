@@ -41,6 +41,8 @@ from .config import config
 
 
 
+import numpy as np
+
 def get_It(data, Lbin=None, Nstep=None):
     '''
     Compute the average frame intensity [ph/px/s] vector from the data, properly masked with the mask. 
@@ -71,12 +73,16 @@ def get_It(data, Lbin=None, Nstep=None):
     if Lbin > Nstep:
         raise ValueError("Lbin cannot be greater than Nstep")
 
-    # COMPUTE It (masked)
-    idx = np.array([i for i in range(data.shape[0]) if i % Nstep < Lbin][:((data.shape[0])//Nstep-1)*Nstep]) # GET THE CORRECT INDEXES FROM Nfi, Nff, Lbin and Nstep
+    # CORRETTO: rimosso il '-1' che tagliava via l'ultimo blocco utile
+    max_limit = (data.shape[0] // Nstep) * Nstep
+    idx = np.array([i for i in range(data.shape[0]) if i % Nstep < Lbin and i < max_limit])
+    
     It = data[idx].sum(axis=1) / data.shape[1]
-    if Lbin != 1: It = It[:(It.size//Lbin)*Lbin].reshape(-1, Lbin).sum(axis=1) / Lbin                   # BIN It (if Lbin > 1)
-    It /= itime                                                                                        # NORMALIZE It
-    t_It = np.arange(1, It.size + 1) * itime * Nstep                                                # BUILD THE TIME VECTOR    
+    if Lbin != 1: 
+        It = It[:(It.size//Lbin)*Lbin].reshape(-1, Lbin).sum(axis=1) / Lbin  # BIN It (if Lbin > 1)
+        
+    It /= itime                                                             # NORMALIZE It
+    t_It = np.arange(1, It.size + 1) * itime * Nstep                        # BUILD THE TIME VECTOR    
 
     return np.vstack((t_It, It))
 

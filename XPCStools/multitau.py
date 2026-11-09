@@ -53,29 +53,22 @@ def _get_symG2t(Itp):
 def _get_nonsymG2t(Itp1, Itp2):
     # Compute full G2t
     G2t = dot_product_mkl(Itp1, Itp2.T, dense=True)
-           
-    # Normalize G2t (directly accounting for 0-counts frames)
-    #It1 = Itp1.sum(axis=1, dtype=np.float32)
-    #It2 = Itp2.sum(axis=1, dtype=np.float32)
-    #It1 = np.where(It1 > 0, It1, np.sqrt(Itp1.shape[1], dtype=np.float32))
-    #It2 = np.where(It2 > 0, It2, np.sqrt(Itp2.shape[1], dtype=np.float32))
-    #np.divide(np.sqrt(Itp1.shape[1]), It1, out=It1, dtype=np.float32)
-    #np.divide(np.sqrt(Itp2.shape[1]), It2, out=It2, dtype=np.float32)
 
     sqrt_N1 = np.float32(np.sqrt(Itp1.shape[1]))
     sqrt_N2 = np.float32(np.sqrt(Itp2.shape[1]))
     It1_sum = Itp1.sum(axis=1, dtype=np.float32)
     It2_sum = Itp2.sum(axis=1, dtype=np.float32)
-    It1 = np.full_like(It1_sum, np.nan)
-    It2 = np.full_like(It2_sum, np.nan)
+
+    #It1 = np.full_like(It1_sum, np.nan)
+    #It2 = np.full_like(It2_sum, np.nan)
+    It1 = np.full_like(It1_sum, 0)
+    It2 = np.full_like(It2_sum, 0)
+
     np.divide(sqrt_N1, It1_sum, out=It1, where=It1_sum > 0)
     np.divide(sqrt_N2, It2_sum, out=It2, where=It2_sum > 0)
 
     Itr, Itc = It1[:, None], It2[None, :]
     ne.evaluate('G2t*Itr*Itc', out=G2t)
-
-    # Replace exact zeros with 1
-    #G2t[G2t == 0] = 1.0
 
     return G2t
 
@@ -122,24 +115,9 @@ def _G2t2G2tmt(G2t, type, ch_depth):
         if corr != Correlators[-1]:
             BIN_matrix = sparse.csr_array((np.ones(G2t.shape[0]), (np.arange(G2t.shape[0]) // 2, np.arange(G2t.shape[0]))), dtype=np.float32)
 
-            # build nan mask
-            #nan_mask = np.isnan(G2t)
-
-            # remove nans
-            #G2t[nan_mask] = 0
-
-            #nan_mask = nan_mask.astype(np.float32)
-
-            # bin G2t and nan_mask
             G2t = dot_product_mkl(BIN_matrix, G2t)
             G2t = dot_product_mkl(BIN_matrix, G2t.T)
             G2t = G2t.T / 4
-
-            #nan_mask = dot_product_mkl(BIN_matrix, nan_mask)
-            #nan_mask = dot_product_mkl(BIN_matrix, nan_mask.T)
-
-            # apply nan mask to G2t
-            #G2t[nan_mask == 4] = np.nan
 
     return G2tmt
 
@@ -395,7 +373,7 @@ def plot_G2tmt(G2tmt, vmin, vmax, lower_corr=4, upper_corr=None, yscale='log', f
 
 
 
-def get_g2mt(G2tmt, t1=None, t2=None):
+def get_g2mt(G2tmt, t1=None, t2=None, skip_nan=False):
     """
     Calculate time delays, mean, and standard error of g2 values for multi-tau XPCS.
     Optionally cuts the data within a time window [t1, t2].
@@ -434,15 +412,23 @@ def get_g2mt(G2tmt, t1=None, t2=None):
             
 
             # Compute statistics
-            t_g2mt.append(itime_corr * ch)
-            g2mt.append(np.mean(arr))
-            dg2mt.append(np.std(arr) / np.sqrt(arr.size))
+            if not skip_nan:
+                t_g2mt.append(itime_corr * ch)
+                g2mt.append(np.mean(arr))
+                dg2mt.append(np.std(arr) / np.sqrt(arr.size))
+            else:
+                print(f'skipping {np.isnan(arr).sum()} NaN values for corr={corr}, ch={ch} ({np.isnan(arr).sum()/arr.size*100:.2f}%)')
+                arr = arr[~np.isnan(arr)]  # Remove NaN values
+                if arr.size > 0:
+                    t_g2mt.append(itime_corr * ch)
+                    g2mt.append(np.mean(arr))
+                    dg2mt.append(np.std(arr) / np.sqrt(arr.size))
 
     return np.vstack((np.array(t_g2mt), np.array(g2mt), np.array(dg2mt)))
 
 
 
-def save_G2tmt(filepath, G2tmt):
+def save_G2tmt(filepath, G2tmt, verbose=True):
     """
     Save G2tmt (2D nested list of np.ndarrays) to a compressed .npz file.
     """
@@ -460,7 +446,8 @@ def save_G2tmt(filepath, G2tmt):
             data_dict[f"arr_{corr}_{ch}"] = G2tmt[corr][ch]
             
     np.savez_compressed(filepath, **data_dict)
-    print(f"G2tmt successfully saved to {filepath}")
+    if verbose:
+        print(f"G2tmt successfully saved to {filepath}")
 
 
 

@@ -24,26 +24,7 @@ from sparse_dot_mkl import dot_product_mkl
 ##### SET BEAMLINE  AND EXP VARIABLES #######
 #############################################
 
-def set_beamline(beamline_toset):
-    '''
-    Set the beamline parameters for the data analysis.
-
-    Parameters
-    ----------
-    beamline_toset: str
-        Beamline name
-    '''
-    global beamline, Nx, Ny, Npx, lxp, lyp
-    if beamline_toset == 'PETRA3':
-        import beamline_tools.PETRA3tools_old as PETRA
-        beamline = 'PETRA3'
-        Nx, Ny, Npx, lxp, lyp = PETRA.Nx, PETRA.Ny, PETRA.Npx, PETRA.lxp, PETRA.lyp
-    elif beamline_toset == 'ID10':
-        import beamline_tools.ID10tools_old as ID10
-        beamline = 'ID10'
-        Nx, Ny, Npx, lxp, lyp = ID10.Nx, ID10.Ny, ID10.Npx, ID10.lxp, ID10.lyp
-    else:
-        raise ValueError('Beamline not recognized!')
+Nx, Ny, Npx = 2162, 2068, 2162*2068
     
 ############################################
 ########### GAMMA RAY FILTER ###############

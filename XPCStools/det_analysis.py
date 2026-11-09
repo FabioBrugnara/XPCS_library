@@ -66,7 +66,7 @@ def plot_Ip(Ip, Ip_max=None, mask=None, I1=None, I2=None, Imax1=None, Imax2=None
     print('################################################################################\n')
 
     # MEAN FLUX PER PX FIGURE
-    plt.figure(figsize=(8,13))
+    fig = plt.figure(figsize=(8,13))
     ax4 = plt.subplot(211)
     if I2 is None: vmax = Ip[mask].max()
     else:                vmax = I2
@@ -117,6 +117,9 @@ def plot_Ip(Ip, Ip_max=None, mask=None, I1=None, I2=None, Imax1=None, Imax2=None
 
 
     plt.tight_layout(); plt.show()
+
+    if Ip_max is None: return fig, ax4, ax5
+
 
     # MAXIMUM COUNTS PER PX FIGURE
     if Ip_max is not None:
@@ -225,7 +228,7 @@ def get_mask(Ip=None, Ip_max=None, I2=None, I1=None, Imax1=None, Imax2=None, mas
 
 
 
-def get_Qmask(theta, Q, dq, Qmap_plot=False):
+def get_Qmask(theta, Q, dq, Qmap_plot=False, legend=True):
     '''
     Generate the Q masks for the given Q values at the working angle. The function also plot the Qmap for the given energy and angle (if Qmap_plot is True).
 
@@ -279,8 +282,8 @@ def get_Qmask(theta, Q, dq, Qmap_plot=False):
     else:
         Qmask = {}
         for i in range(len(Q)):
-            if (type(dq) == float) or (type(dq) == int): Qmask[Q[i]] = (np.abs(Q_map-Q[i])<dq   ).flatten() # case of a list of Q values, single dq value
-            else:                                        Qmask[Q[i]] = (np.abs(Q_map-Q[i])<dq[i]).flatten() # case of a list of Q values, list of dq values
+            if (type(dq) == float) or (type(dq) == int): Qmask[Q[i]] = ((Q_map - Q[i] >= -dq) & (Q_map - Q[i] < dq)).flatten() # case of a list of Q values, single dq value
+            else:                                        Qmask[Q[i]] = ((Q[i] - dq[i] <= Q_map) & (Q_map < Q[i] + dq[i])).flatten() # case of a list of Q values, list of dq values
     
     # QMASK PLOT
     plt.figure(figsize=(8,8))                                          
@@ -295,7 +298,9 @@ def get_Qmask(theta, Q, dq, Qmap_plot=False):
             plt.scatter([],[], color=plt.cm.viridis(s*(i+1)), label=str(Q[i])+'$\\AA^{-1}$')
         plt.imshow(Qmask2plot, cmap='viridis', origin='lower', vmin=0, vmax=1, alpha=1)
 
-    plt.xlabel('Y [px]'); plt.ylabel('X [px]'); plt.legend()
+    plt.xlabel('Y [px]'); plt.ylabel('X [px]'); 
+    if legend==True:
+        plt.legend()
     plt.tight_layout(); plt.show()
 
     # QMAP PLOT (if Qmap_plot=True)
