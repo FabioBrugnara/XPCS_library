@@ -11,253 +11,210 @@ from .utils import theta2Q
 
 
 def get_Ip(data, load_mask=None, max_comp=False):
+    total_px = config.Nx * config.Ny
 
-    itime = config["itime"]
+    if load_mask is None:
+        if data.shape[1] != total_px:
+            raise ValueError(
+                'Data are masked at loading! (Or you set wrong config["Nx"] and config["Ny"] values). '
+                'Please provide a load_mask to compute the mean flux per pixel!'
+            )
+        load_mask = np.ones(total_px, dtype=bool)
+    else:
+        load_mask = load_mask.flatten()
 
-    # Fetch parameters from config
-    ofvalue = config["ofvalue"]
-    total_px = config["Npx"]
+    if data.shape[1] != load_mask.sum():
+        raise ValueError('The load_mask does not match the data.shape[1]! Please check the mask dimensions!')
 
-    # CHECK data AND load_mask DIMENSION
-    if (data.shape[1] != total_px) and (load_mask is None):            raise ValueError('Data are masked at loading! Please provide the load_mask!')
-    if (load_mask is not None) and (data.shape[1] != load_mask.sum()): raise ValueError('The load_mask does not match the data.shape[1]! Please check the mask dimensions!')
+    # Calcolo della media Ip
+    Ip = np.full(total_px, config.ofvalue, dtype=float)
+    Ip[load_mask] = data.sum(axis=0) / (config.itime * data.shape[0])
 
-    # COMPUTE THE MEAN FLUX PER PX [ph/s/px]
-    Ip = np.ones(total_px) * ofvalue
-    if load_mask is None: Ip            = data.sum(axis=0)/(itime*data.shape[0])
-    else:                 Ip[load_mask] = data.sum(axis=0)/(itime*data.shape[0])
+    if not max_comp:
+        return Ip.reshape(config.Nx, config.Ny)
 
-    # COMPUTE THE MAXIMUM COUNTS PER PX [ph/px] (only if needed)
-    if max_comp:
-        Ip_max = np.ones(total_px) * ofvalue
-        if load_mask is None: Ip_max            = (data.max(axis=0)).toarray()
-        else:                 Ip_max[load_mask] = (data.max(axis=0)).toarray()
+    # Calcolo del massimo Ip_max (se richiesto)
+    Ip_max = np.full(total_px, config.ofvalue, dtype=float)
+    max_vals = data.max(axis=0)
+    if hasattr(max_vals, "toarray"):
+        max_vals = max_vals.toarray().ravel()
+        
+    Ip_max[load_mask] = max_vals
 
-    if not max_comp: return Ip
-    else:            return Ip, Ip_max
+    return Ip.reshape(config.Nx, config.Ny), Ip_max.reshape(config.Nx, config.Ny)
 
 
 
 
-def plot_Ip(Ip, Ip_max=None, mask=None, I1=None, I2=None, Imax1=None, Imax2=None, mask_geom=None):
+def plot_Ip(Ip, I1=None, I2=None, mask_geom=None):
     '''
-    Function that generates different plots to create the mask! By default it generates the average flux per pixel map and histogram.
+    Function that generates the flux map and its histogram. 
+    Pixels equal to config.ofvalue are automatically treated as masked.
     '''
-    # Fetch parameters from config
-    Nx, Ny = config["Nx"], config["Ny"]
-    ofvalue = config["ofvalue"]
-    total_px = config["Npx"]
+    Nx, Ny = config.Nx, config.Ny
 
-    # CHECK mask DIMENSION
-    if mask is not None:
-        if mask.size != total_px:
-            raise ValueError("mask must have config['Npx'] elements!")
+    # Define valid pixels (those that are not ofvalue)
+    valid_pixels = (Ip != config.ofvalue)
 
-    if mask is None: mask = Ip != ofvalue
-    else:            mask = (Ip != ofvalue) & mask
+    # Print Information
+    num_valid = valid_pixels.sum()
+    
+    if I2 is not None:
+        count = (Ip[valid_pixels] > I2).sum()
+        pct = (count / num_valid * 100) if num_valid > 0 else 0
+        print(f"# pixels above upper threshold ({I2}) -> {count} pixels (of {num_valid} => {pct:.2f}%)")
+        
+    if I1 is not None:
+        count = (Ip[valid_pixels] < I1).sum()
+        pct = (count / num_valid * 100) if num_valid > 0 else 0
+        print(f"# pixels below lower threshold ({I1}) -> {count} pixels (of {num_valid} => {pct:.2f}%)")
+        
+    print(f"# Absolute max value -> {Ip[valid_pixels].max()}\n")
 
-    # PRINT INFORMATIONS    
-    print('################################################################################')
-    if I2 is not None: print('# of pixels above I2 treshold -> ', Ip[mask][Ip[mask]>I2].shape[0], 'pixels (of', Ip.shape[0], '=>', round(Ip[mask][Ip[mask]>I2].shape[0]/Ip[mask].shape[0]*100, 2), '%)')
-    if I1 is not None: print('# of pixels below I1 treshold -> ',   Ip[mask][Ip[mask]<I1].shape[0], 'pixels (of', Ip.shape[0], '=>', round(Ip[mask][Ip[mask]<I1].shape[0]/Ip[mask].shape[0]*100, 2), '%)')
-    if (Ip_max is not None): print('Maximum count in the whole run ->', Ip_max.max())
-    if (Ip_max is not None) and (Imax1 is not None): print('# of pixels with max below Imax1 treshold -> ', Ip_max[mask][Ip_max[mask]<Imax1].shape[0], 'pixels (of', Ip_max.shape[0], '=>', round(Ip_max[mask][Ip_max[mask]<Imax1].shape[0]/Ip_max.shape[0]*100, 2), '%)')
-    if (Ip_max is not None) and (Imax2 is not None): print('# of pixels with max above Imax2 treshold -> ', Ip_max[mask][Ip_max[mask]>Imax2].shape[0], 'pixels (of', Ip_max.shape[0], '=>', round(Ip_max[mask][Ip_max[mask]>Imax2].shape[0]/Ip_max.shape[0]*100, 2), '%)')
-    print('################################################################################\n')
-
-    # MEAN FLUX PER PX FIGURE
-    fig = plt.figure(figsize=(8,13))
-    ax4 = plt.subplot(211)
-    if I2 is None: vmax = Ip[mask].max()
-    else:                vmax = I2
-    if I1 is None:  vmin = Ip[mask].min()
-    else:                vmin = I1
-    im = ax4.imshow(Ip.reshape(Nx, Ny), vmin=vmin, vmax=vmax, origin='lower')  # plot the mean flux per px 
-    plt.colorbar(im, ax=ax4, label='Mean flux per pixel [ph/s/px]')                                                                                            
+    # --- FIGURE: IMAGE MAP & HISTOGRAM ---
+    fig = plt.figure(figsize=(8, 13))
+    gs = fig.add_gridspec(2, 1, height_ratios=[3, 1])
+    
+    # 1. Image Map (in alto)
+    ax4 = fig.add_subplot(gs[0])
+    vmin = I1 if I1 is not None else Ip[valid_pixels].min()
+    vmax = I2 if I2 is not None else Ip[valid_pixels].max()
+    
+    Ip_grid = Ip.reshape(Nx, Ny).copy()
+    Ip_grid[Ip_grid == config.ofvalue] = np.nan
+    
+    cmap = plt.colormaps.get_cmap('viridis').copy()
+    cmap.set_bad(color='black')
+    
+    im = ax4.imshow(Ip_grid, vmin=vmin, vmax=vmax, origin='lower', cmap=cmap)
+    plt.colorbar(im, ax=ax4, label="Mean flux per pixel [ph/s/px]")
     ax4.set_xlabel('Y [px]')
     ax4.set_ylabel('X [px]')
     ax4.set_xlim(0, Ny)
-    ax4.set_ylim(0, Nx)  
-    if (config["X0"] is not None) and (config["Y0"] is not None):
-        ax4.plot(config["Y0"], config["X0"], 'ro', markersize=10) # plot the beam center
+    ax4.set_ylim(0, Nx)
 
-    if mask_geom is not None: # plot the mask geometry (mask_geom)
-        for obj in mask_geom: # loop over the objects ...  
-            if obj['geom'] == 'Circle':
+    if config.X0 is not None and config.Y0 is not None:
+        ax4.plot(config.Y0, config.X0, 'ro', markersize=10)
+
+    if mask_geom is not None:
+        for obj in mask_geom:
+            geom_type = obj.get('geom')
+            if geom_type == 'Circle':
                 ax4.add_artist(plt.Circle((obj['Cy'], obj['Cx']), obj['r'], color='r', fill=False))
-            elif obj['geom'] == 'Rectangle':
+            elif geom_type == 'Rectangle':
                 ax4.add_artist(plt.Rectangle((obj['y0'], obj['x0']), obj['yl'], obj['xl'], color='r', fill=False))
-            elif obj['geom'] == 'Line':
-                xx = np.array((obj['y0'],obj['y1'],1))
-                mm = (obj['x1']-obj['x0'])/(obj['y1']-obj['y0'])
-                qq = obj['x0'] - obj['y0']*mm
-                ax4.add_artist(plt.plot(xx, mm*xx+qq+int(obj['linewidth']/2), color='r')[0])
-                ax4.add_artist(plt.plot(xx, mm*xx+qq-int(obj['linewidth']/2), color='r')[0])
+            elif geom_type == 'Line':
+                y0, y1, x0, x1 = obj['y0'], obj['y1'], obj['x0'], obj['x1']
+                xx = np.array((y0, y1, 1))
+                mm = (x1 - x0) / (y1 - y0) if (y1 - y0) != 0 else 0
+                qq = x0 - y0 * mm
+                lw_offset = int(obj.get('linewidth', 1) / 2)
+                ax4.plot(xx, mm * xx + qq + lw_offset, color='r')
+                ax4.plot(xx, mm * xx + qq - lw_offset, color='r')
 
-    # MEAN FLUX PER PX HISTOGRAM
+    # 2. Histogram (in basso)
+    r_min = max(0, I1 - I1 * 0.5) if I1 is not None else Ip[valid_pixels].min()
+    r_max = I2 + I2 * 0.5 if I2 is not None else Ip[valid_pixels].max()
+    hist_range = (r_min, r_max)
 
-    # Compute fallback limits only if needed
-    d_min = Ip[mask].min() if (I1 is None and I2 is not None) else None
-    d_max = Ip[mask].max() if (I2 is None and I1 is not None) else None
+    ax5 = fig.add_subplot(gs[1])
+    ax5.hist(Ip[valid_pixels], bins=123, range=hist_range, label='pixels')
+    if I2 is not None: ax5.axvline(I2, color='r', label='Threshold 2 (I2)')
+    if I1 is not None: ax5.axvline(I1, color='g', label='Threshold 1 (I1)')
+    ax5.set_yscale('log')
+    ax5.set_xlabel("Mean flux per pixel [ph/s/px]")
+    ax5.legend()
 
-    r_min = I1 * 0.5 if I1 is not None else d_min
-    r_max = I2 * 1.5 if I2 is not None else d_max
+    plt.tight_layout()
 
-    # Pass tuple only if at least one bound was defined
-    hist_range = (r_min, r_max) if (r_min is not None and r_max is not None) else None
-
-    ax5 = plt.subplot(413)
-    ax5.hist(Ip[mask], bins=123, range=hist_range, label='pixels')
-
-    if I2 is not None: ax5.axvline(I2, color='r', label='I2') # plot the I2 limit
-    if I1 is not None: ax5.axvline(I1,  color='g', label='I1') # plot the I1 limit
-    ax5.set_yscale('log')                                                                                                                                  
-    ax5.set_xlabel('Mean flux per pixel [ph/s/px]')                                                                                                      
-    ax5.legend()                                                                                                                                           
-
-
-    plt.tight_layout(); plt.show()
-
-    if Ip_max is None: return fig, ax4, ax5
-
-
-    # MAXIMUM COUNTS PER PX FIGURE
-    if Ip_max is not None:
-
-        if Imax2 is None: Imax2 = Ip_max[mask].max()
-
-        plt.figure(figsize=(8,13))
-        ax4 = plt.subplot(211)
-        
-        # MAX COUNTS PER PX IMAGE
-        im = ax4.imshow(Ip_max.reshape(Nx, Ny), vmin=Imax1, vmax=Imax2, origin='lower')
-        plt.colorbar(im, ax=ax4, label='Max counts per pixel [ph/px]')
-        ax4.set_xlabel('Y [px]')
-        ax4.set_ylabel('X [px]')
-
-        # MAX COUNTS PER PX HISTOGRAM
-        d_max = Ip_max[mask].max() if (Imax2 is None and Imax1 is not None) else None
-
-        r_min = 0
-        r_max = Imax2 * 1.5 if Imax2 is not None else d_max
-
-        hist_range = (r_min, r_max) if (r_min is not None and r_max is not None) else None
-
-        ax5 = plt.subplot(413)
-        ax5.hist(Ip_max[mask], bins=200, range=hist_range, label='pixels')
-        if Imax2 is not None: ax5.axvline(Imax2, color='r', label='Imax2') # plot the Imax2 limit
-        if Imax1 is not None: ax5.axvline(Imax1, color='g', label='Imax1') # plot the Imax1 limit
-
-        ax5.set_yscale('log')
-        ax5.set_xlabel('Max counts per pixel [ph/px]')
-        ax5.legend()
-
-
-        plt.tight_layout()
-        plt.show()
+    return fig, ax4, ax5
 
 
 
 
-def get_mask(Ip=None, Ip_max=None, I2=None, I1=None, Imax1=None, Imax2=None, mask=None, mask_geom=None):
+def get_mask(Ip=None, I2=None, I1=None, mask=None, mask_geom=None):
     '''
-    Generate a mask for the e4m detector from various options. The function plot the so-obtained mask, and also return some histograms to look at the results (if hist_plots is True).
+    Generate a boolean mask for the detector combining geometry and thresholds.
+    Returns the boolean mask (True for valid pixels, False for masked).
     '''
-    Nx, Ny = config["Nx"], config["Ny"]
-    total_px = config["Npx"]
+    Nx, Ny = config.Nx, config.Ny
+    total_px = Nx * Ny
 
-
-    # GENERATE MASK OF ONES
+    # 1. Generate or validate base mask
     if mask is None:
-        mask = np.ones(total_px, dtype=bool)
+        mask = np.ones((Nx, Ny), dtype=bool)
+    elif mask.ndim == 2:
+        if mask.shape != (Nx, Ny):
+            raise ValueError(f"Provided mask shape {mask.shape} does not match expected shape ({Nx}, {Ny}).")
+        else:
+            mask = mask.astype(bool)
     else:
-        if mask.size != total_px:
-            raise ValueError("mask must have config['Npx'] elements!")
-        mask = np.asarray(mask, dtype=bool).ravel()
+        if mask.ndim ==1:
+            if mask.size != total_px:
+                raise ValueError(f"Provided mask size {mask.size} does not match expected size {total_px}.")
+            else:
+                mask = mask.astype(bool).reshape(Nx, Ny)
 
-
-    # APPLAY GEOMETRIC MASKS (if mask_geom is not None)
-    if (mask_geom is not None) and (mask_geom!=[]):
-        mask = mask.reshape(Nx, Ny)
+    # 2. Apply geometric masks if provided
+    if mask_geom:
         X, Y = np.mgrid[:Nx, :Ny]
         for obj in mask_geom:
-            if obj['geom']=='Circle':
-                if obj['inside']:
-                    mask = mask * ((Y-obj['Cy'])**2 + (X-obj['Cx'])**2 <= obj['r']**2)
-                else:
-                    mask = mask * ((Y-obj['Cy'])**2 + (X-obj['Cx'])**2 > obj['r']**2)
-            elif obj['geom']=='Rectangle':
-                if obj['inside']:
-                    mask = mask * ((Y>obj['y0']) & (Y<obj['y0']+obj['yl']) & (X>obj['x0']) & (X<obj['x0']+obj['xl']))
-                else:
-                    mask = mask * ((Y<obj['y0']) | (Y>obj['y0']+obj['yl']) | (X<obj['x0']) | (X>obj['x0']+obj['xl']))
-            elif obj['geom']=='Line':
-                    mm = (obj['x1']-obj['x0'])/(obj['y1']-obj['y0'])
-                    qq = obj['x0'] - obj['y0']*mm
-                    mask = mask * ~(((X>mm*Y+qq-int(obj['linewidth']/2))) & (X<mm*Y+qq+int(obj['linewidth']/2)))
-        mask = mask.flatten()
+            geom_type = obj.get('geom')
+            if geom_type == 'Circle':
+                cond = (Y - obj['Cy'])**2 + (X - obj['Cx'])**2 <= obj['r']**2
+                mask &= cond if obj['inside'] else ~cond
+            elif geom_type == 'Rectangle':
+                cond = (Y > obj['y0']) & (Y < obj['y0'] + obj['yl']) & (X > obj['x0']) & (X < obj['x0'] + obj['xl'])
+                mask &= cond if obj['inside'] else ~cond
+            elif geom_type == 'Line':
+                mm = (obj['x1'] - obj['x0']) / (obj['y1'] - obj['y0']) if (obj['y1'] - obj['y0']) != 0 else 0
+                qq = obj['x0'] - obj['y0'] * mm
+                lw_half = int(obj.get('linewidth', 1) / 2)
+                line_cond = (X > mm * Y + qq - lw_half) & (X < mm * Y + qq + lw_half)
+                mask &= ~line_cond
 
-    # FILTER USING THRESHOLDS
+    # 3. Filter using thresholds on Ip
     if Ip is not None:
+        if Ip.ndim == 2:
+            if Ip.shape != (Nx, Ny):
+                raise ValueError(f"Provided Ip shape {Ip.shape} does not match expected shape ({Nx}, {Ny}).")
+        elif Ip.ndim == 1:
+            if Ip.size != total_px:
+                raise ValueError(f"Provided Ip size {Ip.size} does not match expected size {total_px}.")
+            else:
+                Ip = Ip.reshape(Nx, Ny)
+
         if I2 is not None:
-            mask &= Ip <= I2
+            mask &= (Ip <= I2)
         if I1 is not None:
-            mask &= Ip >= I1
+            mask &= (Ip >= I1)
 
-    if Ip_max is not None:
-        if Imax2 is not None:
-            mask &= Ip_max <= Imax2
-        if Imax1 is not None:
-            mask &= Ip_max >= Imax1
+        # Handle ofvalue automatically if present in Ip
+        mask &= (Ip != config.ofvalue)
 
-    # PRINT PERCENTAGE OF MASKED PIXELS
-    print('#################################################')
-    print('Masked area = ', mask.sum()/total_px*100, '%')
-    print('#################################################\n')
-
-    # PLOT THE MASK
-    plt.figure(figsize=(8,8))
-    plt.imshow(mask.reshape((Nx, Ny)), origin='lower')
-    plt.xlabel('Y [px]')
-    plt.ylabel('X [px]')
-    plt.tight_layout()
-    plt.show()
+    # 4. Print masked percentage
+    masked_pct = (1.0 - mask.sum() / total_px) * 100
+    print(f"# Masked area: {masked_pct:.2f}% ({mask.sum()} valid pixels of {total_px})\n")
 
     return mask
 
 
 
-
-def get_Qmask(theta, Q, dq, Qmap_plot=False, legend=True):
+def get_Qmask(theta, Q, dq, mask_plot=True, Qmap_plot=False, legend=True):
     '''
-    Generate the Q masks for the given Q values at the working angle. The function also plot the Qmap for the given energy and angle (if Qmap_plot is True).
-
-    Parameters
-    ----------
-    theta: float
-        Working angle in degrees
-    Q: float or list of floats
-        Q value(s) to mask in [1/A]
-    dq: float or list of floats
-        Q width(s) to mask in [1/A]
-    Qmap_plot: bool
-        If True, plot the Qmap for the given energy and angle
-
-    Returns
-    -------
-    np.array or dict of np.array
-        Q mask(s) of the e4m detector
+    Generate the Q masks (2D) for the given Q values at the working angle. 
+    Optionally plots the Q mask and the Q map.
     '''
-    Nx, Ny = config["Nx"], config["Ny"]
-    X0, Y0 = config["X0"], config["Y0"]
-    L = config["L"]
-    lxp, lyp = config["lxp"], config["lyp"]
-    movement_axis = config["movement_axis"]
+    Nx, Ny = config.Nx, config.Ny
+    X0, Y0 = config.X0, config.Y0
+    L = config.L
+    lxp, lyp = config.lxp, config.lyp
+    movement_axis = config.movement_axis
 
-    # GET THE X-Y MAPS
+    # 1. GET THE X-Y MAPS
     X, Y = np.mgrid[:Nx, :Ny]
 
-    # COMPUTE THE Q MAP FOR THE GIVEN DETECTOR DISTANCE, DETECTOR POSITION, AND X-RAY ENERGY
+    # 2. COMPUTE THE Q MAP FOR THE GIVEN GEOMETRY AND ENERGY
     if movement_axis == 'Y':
         dY0 = L * np.tan(np.deg2rad(theta))
         dY0_map = np.sqrt(((X - X0) * lxp)**2 + (dY0 - (Y - Y0) * lyp)**2)
@@ -266,49 +223,64 @@ def get_Qmask(theta, Q, dq, Qmap_plot=False, legend=True):
         dX0 = L * np.tan(np.deg2rad(theta))
         dX0_map = np.sqrt(((dX0 - (X - X0) * lxp))**2 + ((Y - Y0) * lyp)**2)
         theta_map = np.arctan(dX0_map / L)
-    elif movement_axis =='-Y':
+    elif movement_axis == '-Y':
         dY0 = L * np.tan(np.deg2rad(theta))
         dY0_map = np.sqrt(((X - X0) * lxp)**2 + ((-dY0 - (Y - Y0) * lyp))**2)
         theta_map = np.arctan(dY0_map / L)
-    elif movement_axis =='-X':
+    elif movement_axis == '-X':
         dX0 = L * np.tan(np.deg2rad(theta))
         dX0_map = np.sqrt(((-dX0 - (X - X0) * lxp))**2 + ((Y - Y0) * lyp)**2)
         theta_map = np.arctan(dX0_map / L)
         
-    Q_map = theta2Q(config["Ei"], np.rad2deg(theta_map))
+    Q_map = theta2Q(config.Ei, np.rad2deg(theta_map))
 
-    # GET THE Q REGION
-    if (type(Q) == float) or (type(Q) == int):           Qmask       = (np.abs(Q_map-Q)<dq      ).flatten() # case of a single Q value
+    # 3. GET THE Q REGION IN 2D
+    is_scalar_Q = isinstance(Q, (float, int, np.floating, np.integer))
+    is_scalar_dq = isinstance(dq, (float, int, np.floating, np.integer))
+
+    if is_scalar_Q:
+        Qmask = (np.abs(Q_map - Q) < dq)
     else:
         Qmask = {}
-        for i in range(len(Q)):
-            if (type(dq) == float) or (type(dq) == int): Qmask[Q[i]] = ((Q_map - Q[i] >= -dq) & (Q_map - Q[i] < dq)).flatten() # case of a list of Q values, single dq value
-            else:                                        Qmask[Q[i]] = ((Q[i] - dq[i] <= Q_map) & (Q_map < Q[i] + dq[i])).flatten() # case of a list of Q values, list of dq values
-    
-    # QMASK PLOT
-    plt.figure(figsize=(8,8))                                          
-    if (type(Q) == float) or (type(Q) == int):                                                              # case of a single Q value
-        plt.imshow(Qmask.reshape((Nx, Ny)), cmap='viridis', origin='lower', vmin=0, vmax=1, alpha=1)
-        plt.scatter([],[], color=plt.cm.viridis(1.), label=str(Q)+'$\\AA^{-1}$')
-    else:                                                                                                   # case of a list of Q values
-        Qmask2plot = 0
-        s = 1/len(Q)
-        for i, q in enumerate(Qmask.keys()):
-            Qmask2plot += Qmask[q].reshape((Nx, Ny))*s*(i+1)
-            plt.scatter([],[], color=plt.cm.viridis(s*(i+1)), label=str(Q[i])+'$\\AA^{-1}$')
-        plt.imshow(Qmask2plot, cmap='viridis', origin='lower', vmin=0, vmax=1, alpha=1)
+        for i, q_val in enumerate(Q):
+            if is_scalar_dq:
+                Qmask[q_val] = (Q_map - q_val >= -dq) & (Q_map - q_val < dq)
+            else:
+                dq_val = dq[i]
+                Qmask[q_val] = (q_val - dq_val <= Q_map) & (Q_map < q_val + dq_val)
 
-    plt.xlabel('Y [px]'); plt.ylabel('X [px]'); 
-    if legend==True:
-        plt.legend()
-    plt.tight_layout(); plt.show()
+    # 4. QMASK PLOT (if mask_plot=True)
+    if mask_plot:
+        fig_mask, ax_mask = plt.subplots(figsize=(8, 8))
+        
+        if is_scalar_Q:
+            ax_mask.imshow(Qmask, cmap='viridis', origin='lower', vmin=0, vmax=1, alpha=1)
+            ax_mask.scatter([], [], color=plt.cm.viridis(1.), label=f"{Q} $\\AA^{{-1}}$")
+        else:
+            Qmask2plot = np.zeros((Nx, Ny))
+            s = 1.0 / len(Q)
+            for i, q_val in enumerate(Qmask.keys()):
+                Qmask2plot += Qmask[q_val] * s * (i + 1)
+                ax_mask.scatter([], [], color=plt.cm.viridis(s * (i + 1)), label=f"{q_val} $\\AA^{{-1}}$")
+            ax_mask.imshow(Qmask2plot, cmap='viridis', origin='lower', vmin=0, vmax=1, alpha=1)
 
-    # QMAP PLOT (if Qmap_plot=True)
+        ax_mask.set_xlabel('Y [px]')
+        ax_mask.set_ylabel('X [px]')
+        if legend:
+            ax_mask.legend()
+        fig_mask.tight_layout()
+        plt.show()
+
+    # 5. QMAP PLOT (if Qmap_plot=True)
     if Qmap_plot:
-        plt.figure(figsize=(8,8))
-        plt.imshow(Q_map, cmap='viridis', origin='lower')
-        plt.colorbar(); plt.xlabel('Y [px]'); plt.ylabel('X [px]'); plt.title('Q [$\\AA^{-1}$]')
-        plt.tight_layout(); plt.show()
+        fig_qmap, ax_qmap = plt.subplots(figsize=(8, 8))
+        im = ax_qmap.imshow(Q_map, cmap='viridis', origin='lower')
+        fig_qmap.colorbar(im, ax=ax_qmap, label='Q [$\\AA^{-1}$]')
+        ax_qmap.set_xlabel('Y [px]')
+        ax_qmap.set_ylabel('X [px]')
+        ax_qmap.set_title('Q Map')
+        fig_qmap.tight_layout()
+        plt.show()
 
     return Qmask
 
