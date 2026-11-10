@@ -17,8 +17,7 @@ from joblib import Parallel, delayed
 import numba as nb
 
 # Internal imports from matrix_comp
-from .matrix_comp import gram_matrix_mkl, dot_product_mkl, get_Itp_bin
-
+from .matrix_comp import gram_matrix_mkl, dot_product_mkl
 from .config import config
 
 
@@ -28,12 +27,10 @@ def _get_symG2t(Itp):
     # Compute G2t upper triangle
     G2t = gram_matrix_mkl(Itp, dense=True, transpose=True)
 
+    # Normalization
     sqrt_N = np.float32(np.sqrt(Itp.shape[1]))
-    It_sum = Itp.sum(axis=1, dtype=np.float32)
-
-    #It = np.full_like(It_sum, np.nan)
-    It = np.zeros_like(It_sum, dtype=np.float32)
-    np.divide(sqrt_N, It_sum, out=It, where=It_sum > 0)
+    It = Itp.sum(axis=1, dtype=np.float32)
+    np.divide(sqrt_N, It, out=It, where=It > 0)
 
     Itr, Itc = It[:, None], It[None, :]
     ne.evaluate('G2t*Itr*Itc', out=G2t)
@@ -47,17 +44,13 @@ def _get_nonsymG2t(Itp1, Itp2):
     # Compute full G2t
     G2t = dot_product_mkl(Itp1, Itp2.T, dense=True)
 
-    sqrt_N1 = np.float32(np.sqrt(Itp1.shape[1]))
-    sqrt_N2 = np.float32(np.sqrt(Itp2.shape[1]))
-    It1_sum = Itp1.sum(axis=1, dtype=np.float32)
-    It2_sum = Itp2.sum(axis=1, dtype=np.float32)
+    # Normalization
+    sqrt_N = np.float32(np.sqrt(Itp1.shape[1]))
+    It1 = Itp1.sum(axis=1, dtype=np.float32)
+    It2 = Itp2.sum(axis=1, dtype=np.float32)
 
-    #It1 = np.full_like(It1_sum, np.nan)
-    #It2 = np.full_like(It2_sum, np.nan)
-    It1 = np.zeros_like(It1_sum, dtype=np.float32)
-    It2 = np.zeros_like(It2_sum, dtype=np.float32)
-    np.divide(sqrt_N1, It1_sum, out=It1, where=It1_sum > 0)
-    np.divide(sqrt_N2, It2_sum, out=It2, where=It2_sum > 0)
+    np.divide(sqrt_N, It1, out=It1, where=It1 > 0)
+    np.divide(sqrt_N, It2, out=It2, where=It2 > 0)
 
     Itr, Itc = It1[:, None], It2[None, :]
     ne.evaluate('G2t*Itr*Itc', out=G2t)
@@ -68,27 +61,8 @@ def _get_nonsymG2t(Itp1, Itp2):
 
 
 def _G2t2G2tmt(G2t, type, ch_depth):
-    """
-    Transform G2t matrix slices into multi-tau array format.
-    """
-    # check if G2t is a square matrix
-    if G2t.shape[0] != G2t.shape[1]:
-        raise ValueError('G2t must be a square matrix! Current shape is ' + str(G2t.shape[0]) + 'x' + str(G2t.shape[1]) + '!')
 
-    # check if G2t shape is a power of 2
-    if int(np.log2(G2t.shape[0])) != np.log2(G2t.shape[0]):
-        raise ValueError('G2t must be a square matrix with size 2^n (n integer)! Current size is ' + str(G2t.shape[0]) + 'x' + str(G2t.shape[1]) + '!')
-    
-    # check ch_depth minimum value
-    if ch_depth < 1:
-        raise ValueError('ch_depth must be greater than or equal to 1! Otherwise you are working with less then 2 channels (the 0-channel compute the variance)!')
-
-    # check if log2(G2t.shape[0]) is greater than or equal to ch_depth
-    if np.log2(G2t.shape[0]) <= ch_depth:
-        print(np.log2(G2t.shape[0]), ch_depth)
-        raise ValueError('log2(G2t.shape[0]) must be greater than or equal to ch_depth! Current log2(G2t.shape[0]) is ' + str(int(np.log2(G2t.shape[0]))) + ' and ch_depth is ' + str(ch_depth) + '!')
-
-    # prepare the G2tmt list & Correlators & Channels ranges
+    # Prepare the G2tmt list & Correlators & Channels ranges
     G2tmt = [[] for _ in range(int(np.log2(G2t.shape[0])) - ch_depth + 1)]
     Correlators = range(len(G2tmt))
     Channels    = range(2**ch_depth)
@@ -121,6 +95,7 @@ def _process_sparse_block(N: int, Itp, sparse_depth: int, ch_depth: int, Nfi:int
     """Processes a single sparse block N independently across worker threads/processes.
        Outputs the dense frame sums and G2tmt correlations for the block.
     """
+
     S = 2**sparse_depth
     ch_step = 2**(sparse_depth - ch_depth)
     n_dense_rows = 2**(ch_depth - 1)
@@ -147,7 +122,7 @@ def _process_sparse_block(N: int, Itp, sparse_depth: int, ch_depth: int, Nfi:int
     # Calculate non-symmetric G2t correlation with adjacent block N+1
     G2tmt_nonsym = None
     if N != N_sparseloops - 1:
-        ItpN_next = Itp[(N + 1) * S : (N + 2) * S]
+        ItpN_next = Itp[Nfi + (N + 1) * S : Nfi + (N + 2) * S]
         if not skip_norm:
             G2t_nonsym = _get_nonsymG2t(ItpN, ItpN_next)
         else:
@@ -161,37 +136,22 @@ def _process_sparse_block(N: int, Itp, sparse_depth: int, ch_depth: int, Nfi:int
 
 
 
-def get_G2tmt_4sparse(data, sparse_depth: int, ch_depth: int = 4, Nfi: int = 0, Nff: int = -1, n_jobs: int = 1, skip_dense: bool = False, skip_norm = False, verbose: bool = True):
+def get_G2tmt_4sparse(data, sparse_depth: int = -1, ch_depth: int = 4, Nfi: int = 0, Nff: int = -1, n_jobs: int = 1, skip_dense: bool = False, skip_norm = False, verbose: bool = True):
     """
     Compute the multitau (mt) G2t correlation from sparse data in parallel.
-
-    Parameters
-    ----------
-    data : sparse.csr_matrix
-        Sparse data of shape (Nf, Npx).
-    sparse_depth : int
-        The number of sparse multitau levels.
-    ch_depth : int, optional
-        Channel depth parameter. Default is 4.
-    Nfi : int, optional
-        Initial frame to consider (inclusive).
-    Nff : int, optional
-        Final frame to consider (exclusive).
-    n_jobs : int, optional
-        Number of parallel CPU cores (-1 uses all cores). Default is -1.
-
-    Returns
-    -------
-    G2tmt : list of np.ndarray
-        List containing the sparse multitau G2t correlation arrays.
     """
-    # Set automatic value for Nff if not provided
+
+    Itp = data
+
+    # Set automatic value for Nff
     if Nff==-1: 
         Nff = (data.shape[0] - Nfi) // 2**sparse_depth * 2**sparse_depth + Nfi
         if verbose:
             print(f'Nff set to {Nff} => (Nff-Nfi) = {(data.shape[0]-Nfi) // 2**sparse_depth}*2^sparse_depth, thrown frames = {(data.shape[0]-Nfi-(Nff-Nfi))} ({round((data.shape[0]-Nfi-(Nff-Nfi))/(data.shape[0]-Nfi)*100, 2)}%)')
 
-    Itp = data
+    # Set automatic value for sparse_depth
+    if sparse_depth==-1:
+        sparse_depth = np.min([13, int(np.log2(Nff-Nfi))-ch_depth-1])
 
     ### CHECK ARGUMENTS CONDITIONS
     if ch_depth < 1:
@@ -267,7 +227,7 @@ def get_G2tmt_4sparse(data, sparse_depth: int, ch_depth: int = 4, Nfi: int = 0, 
         print(f"\t | {Itp_dense.shape[0]} frames X {n_pixels} pixels (memory = {mem_gb} GB)")
 
     # Calculate exact number of dense iterations needed
-    n_dense_levels = (Itp_dense.shape[0] // (num_channels + 1)).bit_length() # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    n_dense_levels = (Itp_dense.shape[0] // (num_channels + 1)).bit_length()
 
     if skip_norm:
         Itp_dense /= 2**(sparse_depth - ch_depth+1)
@@ -302,69 +262,6 @@ def get_G2tmt_4sparse(data, sparse_depth: int, ch_depth: int = 4, Nfi: int = 0, 
 
 
 
-def plot_G2tmt(G2tmt, vmin, vmax, lower_corr=4, upper_corr=None, yscale='log', filter_layer=None, xlims=None, vlines=None):
-    """
-    Plot a multi-tau correlation matrix (G2tmt) using broken bar plot.
-    """
-
-    itime = config["itime"]
-
-    #linewidth = 0.2 if borders else 0
-    linewidth = 0
-
-    if upper_corr is None: 
-        N_corr = len(G2tmt)
-    else:                  
-        N_corr = upper_corr
-    N_ch = len(G2tmt[0])
-
-    fig, ax = plt.subplots(figsize=(10, 5))
-    T = (G2tmt[0][1].shape[0] + 1) * itime
-
-    for corr in range(lower_corr, N_corr):
-        itime_corr = itime * 2**corr
-        for ch in range(N_ch):
-            if (ch == 0) or ((corr > 0) and (ch < N_ch // 2)):
-                pass
-            else:
-                x = np.arange(G2tmt[corr][ch].size) * itime_corr + (1 + ch) * itime_corr / 2
-                dx = itime_corr
-                y = np.ones(G2tmt[corr][ch].size) * itime_corr * ch
-                dy = itime_corr
-
-                xranges = [(x[i] - dx / 2, dx) for i in range(len(x))]
-                yrange = (y[0], dy)
-
-                if (filter_layer is None) or (corr >= filter_layer):
-                    BB = ax.broken_barh(
-                        xranges, yrange, array=G2tmt[corr][ch], cmap="viridis", clim=(vmin, vmax), edgecolor="black", linewidth=linewidth
-                    )
-                else:
-                    filtered_data = gaussian_filter1d(G2tmt[corr][ch], 2 ** (filter_layer - corr), mode="nearest")
-                    BB = ax.broken_barh(
-                        xranges, yrange, array=filtered_data, cmap="viridis", clim=(vmin, vmax), edgecolor="black", linewidth=linewidth
-                    )
-
-    if vlines is not None:
-        for vline in vlines:
-            ax.axvline(x=vline, color="red", linestyle="--", linewidth=1)
-
-    ax.set_xlabel("$t_w$ [s]")
-    ax.set_ylabel("$\\tau$ [s]")
-
-    if xlims is None:
-        ax.set_xlim(0, T)
-    else:
-        ax.set_xlim(xlims)
-    if yscale == "log":
-        ax.set_yscale("log")
-    fig.colorbar(BB, ax=ax)
-    fig.tight_layout()
-    return fig, ax
-
-
-
-
 def get_g2mt(G2tmt, t1=None, t2=None, skip_nan=False):
     """
     Calculate time delays, mean, and standard error of g2 values for multi-tau XPCS.
@@ -394,17 +291,16 @@ def get_g2mt(G2tmt, t1=None, t2=None, skip_nan=False):
             # Apply time window mask if requested
             if use_time_cut:
                 # central time
-                ta = np.arange(arr.size) * itime_corr + itime_corr / 2
-                tb = np.arange(arr.size) * itime_corr + itime_corr / 2 + itime_corr * ch
-                tmean = np.arange(arr.size) * itime_corr + (1 + ch) * itime_corr / 2
+                ta = np.arange(arr.size) * itime_corr                   + itime_corr / 2  
+                tb = np.arange(arr.size) * itime_corr + itime_corr * ch + itime_corr / 2
+                #tmean = np.arange(arr.size) * itime_corr + (1 + ch) * itime_corr / 2
 
-                #mask = (tmean >= t1) & (tmean <= t2)
-                mask = (ta >= t1) & (tb <= t2)
+                mask = (ta - itime_corr/2 >= t1) & (tb + itime_corr/2 <= t2)
 
-                if not np.any(mask):
+                if np.any(mask):
+                    arr = arr[mask]
+                else:
                     continue
-                
-                arr = arr[mask]
                 
             # Compute statistics
             t_g2mt.append(itime_corr * ch)
@@ -415,7 +311,75 @@ def get_g2mt(G2tmt, t1=None, t2=None, skip_nan=False):
 
 
 
+
+def plot_G2tmt(G2tmt, vmin, vmax, lower_corr=8, yscale='log', filter_layer=None, xlims=None, vlines=None):
+    """
+    Plot a multi-tau correlation matrix (G2tmt) using broken bar plot.
+    """
+
+    itime = config.itime
+
+    N_ch = len(G2tmt[0])
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    for corr in range(lower_corr, N_corr):
+        itime_corr = itime * 2**corr
+
+        for ch in range(N_ch):
+            if (ch == 0) or ((corr > 0) and (ch < N_ch // 2)):
+                pass
+            else:
+                line = G2tmt[corr][ch]
+
+                if line.size == 0:
+                    continue
+                
+                # APPLICAZIONE DEL BINNING SE RICHIESTO
+                if (filter_layer is not None) and (corr < filter_layer):
+                    Lbin = 2 ** (filter_layer - corr)
+                    n_trimmed = (line.size // Lbin) * Lbin
+
+                    if n_trimmed > 0:
+                        line = line[:n_trimmed].reshape(-1, Lbin).mean(axis=1)
+                        current_itime_corr = itime_corr * Lbin
+                    else:
+                        current_itime_corr = itime_corr
+                else:
+                    current_itime_corr = itime_corr
+
+                x = np.arange(line.size) * current_itime_corr + (1 + ch) * itime_corr / 2
+                dx = current_itime_corr
+                y = np.ones(line.size) * itime_corr * ch
+                dy = itime_corr
+
+                xranges = [(x[i] - dx / 2, dx) for i in range(len(x))]
+                yrange = (y[0], dy)
+
+                BB = ax.broken_barh(
+                    xranges, yrange, array=line, cmap="viridis", clim=(vmin, vmax), edgecolor="black", linewidth=0
+                )
+
+    if vlines is not None:
+        for vline in vlines:
+            ax.axvline(x=vline, color="red", linestyle="--", linewidth=1)
+
+    ax.set_xlabel("$t_w$ [s]")
+    ax.set_ylabel("$\\tau$ [s]")
+
+    if xlims is not None:
+        ax.set_xlim(xlims)
+    ax.set_yscale(yscale)
+
+    fig.colorbar(BB, ax=ax)
+    fig.tight_layout()
+
+    return fig, ax
+
+
+
 def save_G2tmt(filepath, G2tmt, verbose=True):
+
     """
     Save G2tmt (2D nested list of np.ndarrays) to a compressed .npz file.
     """
@@ -492,8 +456,7 @@ def _process_sparse_block_wl(N: int, load_f, sparse_depth: int, ch_depth: int, N
     return N, dense_rows, G2tmt_sym, G2tmt_nonsym
 
 
-
-
+'''
 def get_G2tmt_4sparse_wl(load_f, sparse_depth: int, ch_depth: int = 4, Nfi: int = 0, Nff:int = -1,  n_jobs: int = 1):
 
     Nff_new = (Nff - Nfi) // 2**sparse_depth * 2**sparse_depth + Nfi
@@ -586,6 +549,9 @@ def get_G2tmt_4sparse_wl(load_f, sparse_depth: int, ch_depth: int = 4, Nfi: int 
     print('Done! (elapsed time =', round(time.time() - t0, 2), 's)')
 
     return G2tmt
+
+'''
+
 
 
 
@@ -910,11 +876,6 @@ def mt_corr(Itp, ch_depth=4, sparse_depth=None, verbose=True):
                 new_data, new_indices, new_indptr = _csc_temporal_bin2x(Itp.data, Itp.indices, Itp.indptr, Itp.shape[0])
                 new_shape = (Itp.shape[0]//2, len(new_indptr) - 1)
                 Itp = sparse.csc_matrix((new_data, new_indices, new_indptr), shape=new_shape)
-
-            # WITHOUT NUMBA: Binning in-place su matrice CSR
-            #n_even = (Itp.shape[0] // 2) * 2
-            #Itp = Itp[0:n_even:2] + Itp[1:n_even:2]
-            #Itp.data *= 0.5
 
 
     # --- PARTE DENSE ---
