@@ -4,6 +4,9 @@ XPCStools
 A Python package for X-ray Photon Correlation Spectroscopy (XPCS) data analysis.
 """
 
+import sys
+from types import ModuleType
+
 from .config import (
     config,
     set_config
@@ -98,3 +101,35 @@ __all__ = [
     "normalize_Itp",
     
 ]
+
+
+class _XPCStoolsModule(ModuleType):
+    """Custom module wrapper allowing direct access and assignment to configuration variables."""
+
+    def __getattr__(self, name: str):
+        if name in config or name == "Npx":
+            return config[name]
+        raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+    def __setattr__(self, name: str, value):
+        if name in config or name == "Npx":
+            config[name] = value
+        else:
+            super().__setattr__(name, value)
+
+    def __dir__(self):
+        return sorted(set(super().__dir__()) | set(config.keys()) | {"Npx"})
+
+
+# PEP 562 functions for static analysis tools, linters, and IDEs
+def __getattr__(name: str):
+    if name in config or name == "Npx":
+        return config[name]
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
+def __dir__():
+    return sorted(set(globals().keys()) | set(config.keys()) | {"Npx"})
+
+
+sys.modules[__name__].__class__ = _XPCStoolsModule

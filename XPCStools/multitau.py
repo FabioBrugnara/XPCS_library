@@ -28,22 +28,15 @@ def _get_symG2t(Itp):
     # Compute G2t upper triangle
     G2t = gram_matrix_mkl(Itp, dense=True, transpose=True)
 
-    # Normalize G2t (directly accounting for 0-counts frames)
-    
-    #It = Itp.sum(axis=1, dtype=np.float32)
-    #It = np.where(It > 0, It, np.sqrt(Itp.shape[1], dtype=np.float32))
-    #np.divide(np.sqrt(Itp.shape[1]), It, where=It > 0, out=It, dtype=np.float32)
-
     sqrt_N = np.float32(np.sqrt(Itp.shape[1]))
     It_sum = Itp.sum(axis=1, dtype=np.float32)
-    It = np.full_like(It_sum, np.nan)
+
+    #It = np.full_like(It_sum, np.nan)
+    It = np.zeros_like(It_sum, dtype=np.float32)
     np.divide(sqrt_N, It_sum, out=It, where=It_sum > 0)
 
     Itr, Itc = It[:, None], It[None, :]
     ne.evaluate('G2t*Itr*Itc', out=G2t)
-
-    # Replace exact zeros with 1
-    #G2t[G2t == 0] = 1.0
 
     return G2t
 
@@ -61,9 +54,8 @@ def _get_nonsymG2t(Itp1, Itp2):
 
     #It1 = np.full_like(It1_sum, np.nan)
     #It2 = np.full_like(It2_sum, np.nan)
-    It1 = np.full_like(It1_sum, 0)
-    It2 = np.full_like(It2_sum, 0)
-
+    It1 = np.zeros_like(It1_sum, dtype=np.float32)
+    It2 = np.zeros_like(It2_sum, dtype=np.float32)
     np.divide(sqrt_N1, It1_sum, out=It1, where=It1_sum > 0)
     np.divide(sqrt_N2, It2_sum, out=It2, where=It2_sum > 0)
 
@@ -401,28 +393,23 @@ def get_g2mt(G2tmt, t1=None, t2=None, skip_nan=False):
 
             # Apply time window mask if requested
             if use_time_cut:
-                x = np.arange(arr.size) * itime_corr + (1 + ch) * itime_corr / 2
-                mask = (x >= t1) & (x <= t2) # Simplified mask (x ± dx/2 bounds simplify to x directly)
-                
+                # central time
+                ta = np.arange(arr.size) * itime_corr + itime_corr / 2
+                tb = np.arange(arr.size) * itime_corr + itime_corr / 2 + itime_corr * ch
+                tmean = np.arange(arr.size) * itime_corr + (1 + ch) * itime_corr / 2
+
+                #mask = (tmean >= t1) & (tmean <= t2)
+                mask = (ta >= t1) & (tb <= t2)
+
                 if not np.any(mask):
                     continue
+                
                 arr = arr[mask]
                 
-            #arr = arr[~np.isnan(arr)]  # Remove NaN values
-            
-
             # Compute statistics
-            if not skip_nan:
-                t_g2mt.append(itime_corr * ch)
-                g2mt.append(np.mean(arr))
-                dg2mt.append(np.std(arr) / np.sqrt(arr.size))
-            else:
-                print(f'skipping {np.isnan(arr).sum()} NaN values for corr={corr}, ch={ch} ({np.isnan(arr).sum()/arr.size*100:.2f}%)')
-                arr = arr[~np.isnan(arr)]  # Remove NaN values
-                if arr.size > 0:
-                    t_g2mt.append(itime_corr * ch)
-                    g2mt.append(np.mean(arr))
-                    dg2mt.append(np.std(arr) / np.sqrt(arr.size))
+            t_g2mt.append(itime_corr * ch)
+            g2mt.append(np.mean(arr))
+            dg2mt.append(np.std(arr) / np.sqrt(arr.size))
 
     return np.vstack((np.array(t_g2mt), np.array(g2mt), np.array(dg2mt)))
 

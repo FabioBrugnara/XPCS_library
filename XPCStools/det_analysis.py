@@ -15,7 +15,7 @@ def get_Ip(data, load_mask=None, max_comp=False):
     itime = config["itime"]
 
     # Fetch parameters from config
-    of_value4plot = config["of_value4plot"]
+    ofvalue = config["ofvalue"]
     total_px = config["Npx"]
 
     # CHECK data AND load_mask DIMENSION
@@ -23,13 +23,13 @@ def get_Ip(data, load_mask=None, max_comp=False):
     if (load_mask is not None) and (data.shape[1] != load_mask.sum()): raise ValueError('The load_mask does not match the data.shape[1]! Please check the mask dimensions!')
 
     # COMPUTE THE MEAN FLUX PER PX [ph/s/px]
-    Ip = np.ones(total_px) * of_value4plot
+    Ip = np.ones(total_px) * ofvalue
     if load_mask is None: Ip            = data.sum(axis=0)/(itime*data.shape[0])
     else:                 Ip[load_mask] = data.sum(axis=0)/(itime*data.shape[0])
 
     # COMPUTE THE MAXIMUM COUNTS PER PX [ph/px] (only if needed)
     if max_comp:
-        Ip_max = np.ones(total_px) * of_value4plot
+        Ip_max = np.ones(total_px) * ofvalue
         if load_mask is None: Ip_max            = (data.max(axis=0)).toarray()
         else:                 Ip_max[load_mask] = (data.max(axis=0)).toarray()
 
@@ -45,7 +45,7 @@ def plot_Ip(Ip, Ip_max=None, mask=None, I1=None, I2=None, Imax1=None, Imax2=None
     '''
     # Fetch parameters from config
     Nx, Ny = config["Nx"], config["Ny"]
-    of_value4plot = config["of_value4plot"]
+    ofvalue = config["ofvalue"]
     total_px = config["Npx"]
 
     # CHECK mask DIMENSION
@@ -53,8 +53,8 @@ def plot_Ip(Ip, Ip_max=None, mask=None, I1=None, I2=None, Imax1=None, Imax2=None
         if mask.size != total_px:
             raise ValueError("mask must have config['Npx'] elements!")
 
-    if mask is None: mask = Ip != of_value4plot
-    else:            mask = (Ip != of_value4plot) & mask
+    if mask is None: mask = Ip != ofvalue
+    else:            mask = (Ip != ofvalue) & mask
 
     # PRINT INFORMATIONS    
     print('################################################################################')
